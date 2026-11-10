@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopLite — Architectural Blueprints & System Design</title>
+  <!-- Publication-Quality Typography from diagram-design system -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --color-paper: #0b0f19;
+      --color-card: #111827;
+      --color-surface: #1e293b;
+      --color-border: #1e293b;
+      --color-border-subtle: rgba(248, 250, 252, 0.08);
+      --color-ink: #f8fafc;
+      --color-muted: #94a3b8;
+      --color-soft: #64748b;
+      --color-accent: #38bdf8;
+      --color-emerald: #34d399;
+      --color-orange: #fb923c;
+      --color-purple: #c084fc;
+      --color-rose: #f43f5e;
+      --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+      --font-serif: 'Instrument Serif', Georgia, serif;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-paper);
+      color: var(--color-ink);
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Application Bar */
+    header {
+      background-color: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--color-accent), #818cf8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: #0b0f19;
+      font-size: 1.15rem;
+      letter-spacing: -0.05em;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--color-ink);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-desc {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--color-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .top-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pill-badge {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      border: 1px solid var(--color-border-subtle);
+      background-color: rgba(30, 41, 59, 0.5);
+      color: var(--color-muted);
+    }
+
+    .pill-live {
+      border-color: rgba(52, 211, 153, 0.25);
+      background-color: rgba(52, 211, 153, 0.08);
+      color: var(--color-emerald);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .pill-live::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--color-emerald);
+      box-shadow: 0 0 6px var(--color-emerald);
+    }
+
+    /* Layout Shell */
+    .app-shell {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 61px);
+    }
+
+    /* Sidebar Navigation */
+    aside {
+      width: 290px;
+      background-color: #080c14;
+      border-right: 1px solid var(--color-border);
+      padding: 1.25rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      overflow-y: auto;
+    }
+
+    .nav-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--color-soft);
+      padding: 0.75rem 0.6rem 0.25rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 6px;
+      color: var(--color-muted);
+      background: transparent;
+      border: 1px solid transparent;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+
+    .nav-item:hover {
+      background-color: var(--color-card);
+      color: var(--color-ink);
+    }
+
+    .nav-item.active {
+      background-color: rgba(56, 189, 248, 0.08);
+      color: var(--color-accent);
+      border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .nav-icon {
+      font-size: 1rem;
+      width: 18px;
+      text-align: center;
+      opacity: 0.85;
+    }
+
+    /* Main Diagram Canvas */
+    main {
+      flex: 1;
+      padding: 2rem 2.5rem;
+      overflow-y: auto;
+      background-color: var(--color-paper);
+    }
+
+    .view-card {
+      display: none;
+    }
+
+    .view-card.active {
+      display: block;
+      animation: viewFade 0.25s ease-out;
+    }
+
+    @keyframes viewFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .canvas-header {
+      margin-bottom: 1.5rem;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-accent);
+      margin-bottom: 0.35rem;
+    }
+
+    .canvas-title {
+      font-family: var(--font-serif);
+      font-size: 2.1rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      color: var(--color-ink);
+      line-height: 1.15;
+      margin-bottom: 0.35rem;
+    }
+
+    .canvas-desc {
+      color: var(--color-muted);
+      font-size: 0.9rem;
+      max-width: 900px;
+    }
+
+    /* Diagram Frame with Native Inline SVG */
+    .diagram-frame {
+      background-color: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .diagram-frame svg {
+      width: 100%;
+      min-width: 960px;
+      height: auto;
+      display: block;
+    }
+
+    /* Information Grid */
+    .spec-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .spec-card {
+      background-color: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .spec-card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--color-ink);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .spec-card-text {
+      font-size: 0.85rem;
+      color: var(--color-muted);
+      line-height: 1.5;
+    }
+
+    .code-term {
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+      color: var(--color-accent);
+      background-color: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    /* Spec Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.25rem;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 0.65rem 0.85rem;
+      border: 1px solid var(--color-border);
+      text-align: left;
+    }
+
+    th {
+      background-color: #0f1523;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      background-color: var(--color-card);
+      color: var(--color-muted);
+    }
+
+    td strong {
+      color: var(--color-ink);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Application Bar -->
+  <header>
+    <div class="brand-group">
+      <div class="brand-mark">S</div>
+      <div class="brand-text">
+        <span class="brand-title">ShopLite</span>
+        <span class="brand-desc">Enterprise Architectural Design System</span>
+      </div>
+    </div>
+    <div class="top-meta">
+      <span class="pill-badge pill-live">Production Architecture</span>
+      <span class="pill-badge">AWS Multi-AZ</span>
+      <span class="pill-badge">GitOps Sync</span>
+      <span class="pill-badge">OpenTelemetry SDK</span>
+    </div>
+  </header>
+
+  <!-- Application Shell -->
+  <div class="app-shell">
+
+    <!-- Sidebar Navigation -->
+    <aside>
+      <div class="nav-label">Master Visualizer</div>
+      <button class="nav-item active" onclick="showTab('tab-master-hld', this)">
+        <span class="nav-icon">🌐</span> Full System Topology (HLD)
+      </button>
+
+      <div class="nav-label">Component Engineering</div>
+      <button class="nav-item" onclick="showTab('tab-api-lld', this)">
+        <span class="nav-icon">📐</span> API Low-Level Design (LLD)
+      </button>
+      <button class="nav-item" onclick="showTab('tab-usecases', this)">
+        <span class="nav-icon">👥</span> System Use Case Model
+      </button>
+      <button class="nav-item" onclick="showTab('tab-trace-sequence', this)">
+        <span class="nav-icon">⏱️</span> Distributed Trace Sequence
+      </button>
+
+      <div class="nav-label">Infrastructure Subsystems</div>
+      <button class="nav-item" onclick="showTab('tab-aws-network', this)">
+        <span class="nav-icon">☁️</span> AWS VPC &amp; Subnets
+      </button>
+      <button class="nav-item" onclick="showTab('tab-gitops', this)">
+        <span class="nav-icon">🚀</span> GitOps &amp; CI/CD Delivery
+      </button>
+      <button class="nav-item" onclick="showTab('tab-observability', this)">
+        <span class="nav-icon">📊</span> Distributed Observability
+      </button>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main>
+
+      <!-- ============================================================== -->
+      <!-- TAB 1: FULL SYSTEM TOPOLOGY (HLD)                             -->
+      <!-- ============================================================== -->
+      <section id="tab-master-hld" class="view-card active">
+        <div class="canvas-header">
+          <p class="eyebrow">High-Level Design · System Blueprint</p>
+          <h1 class="canvas-title">Full System Architecture Topology</h1>
+          <p class="canvas-desc">End-to-end production architecture: Multi-AZ AWS VPC perimeter, Kubernetes private cluster workloads, reliable Redis queue buffering, GitOps reconciliation, and distributed observability.</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1020 580" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="dotPattern" width="22" height="22" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="0.9" fill="rgba(248,250,252,0.06)"/>
+              </pattern>
+              <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#94a3b8"/></marker>
+              <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#38bdf8"/></marker>
+              <marker id="arrow-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#34d399"/></marker>
+              <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#fb923c"/></marker>
+              <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#c084fc"/></marker>
+            </defs>
+
+            <!-- Base Canvas -->
+            <rect width="100%" height="100%" fill="#111827"/>
+            <rect width="100%" height="100%" fill="url(#dotPattern)"/>
+
+            <!-- OUTER BOUNDARY: AWS VPC -->
+            <rect x="20" y="20" width="980" height="540" rx="10" fill="none" stroke="rgba(248,250,252,0.12)" stroke-width="1" stroke-dasharray="6,4"/>
+            <rect x="36" y="14" width="160" height="14" rx="2" fill="#111827"/>
+            <text x="116" y="25" fill="#64748b" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.14em">AWS VPC · 10.0.0.0/16</text>
+
+            <!-- ZONE 1: PUBLIC SUBNETS (ALB & NAT) -->
+            <rect x="40" y="44" width="940" height="74" rx="6" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.08)" stroke-width="0.8"/>
+            <rect x="52" y="38" width="190" height="14" rx="2" fill="#111827"/>
+            <text x="147" y="49" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">PUBLIC SUBNETS · MULTI-AZ</text>
+
+            <!-- Internet Gateway -->
+            <rect x="60" y="60" width="130" height="44" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="125" y="80" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">Internet Gateway</text>
+            <text x="125" y="93" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Inbound / Egress</text>
+
+            <!-- Public ALB -->
+            <rect x="260" y="60" width="220" height="44" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="370" y="80" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">Public ALB (Ports 80 / 443)</text>
+            <text x="370" y="93" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Dual AZs · TLS Termination</text>
+
+            <!-- NAT Gateway -->
+            <rect x="560" y="60" width="160" height="44" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="640" y="80" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">NAT Gateway</text>
+            <text x="640" y="93" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Private Node Egress</text>
+
+            <!-- SSM Session Manager -->
+            <rect x="790" y="60" width="170" height="44" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1"/>
+            <text x="875" y="80" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">AWS SSM Session Mgr</text>
+            <text x="875" y="93" fill="#c084fc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Zero Public SSH IPs</text>
+
+            <!-- Connectors in Public Subnets -->
+            <line x1="190" y1="82" x2="255" y2="82" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-cyan)"/>
+
+            <!-- ZONE 2: PRIVATE SUBNETS & K8S WORKLOADS -->
+            <rect x="40" y="136" width="940" height="408" rx="8" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.1)" stroke-width="1"/>
+            <rect x="52" y="130" width="220" height="14" rx="2" fill="#111827"/>
+            <text x="162" y="141" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">PRIVATE SUBNETS · KUBERNETES WORKLOADS</text>
+
+            <!-- Connector: ALB -> Ingress (L-bend) -->
+            <path d="M 370,104 V 162" fill="none" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+            <rect x="380" y="125" width="70" height="14" rx="2" fill="#111827"/>
+            <text x="415" y="135" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">NodePort</text>
+
+            <!-- Ingress Controller -->
+            <rect x="250" y="165" width="240" height="40" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <text x="370" y="185" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">Ingress (ingress-nginx)</text>
+            <text x="370" y="196" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Path Routing: / and /api</text>
+
+            <!-- NAMESPACE: shoplite -->
+            <rect x="56" y="222" width="620" height="306" rx="6" fill="rgba(52,211,153,0.02)" stroke="rgba(52,211,153,0.25)" stroke-width="1"/>
+            <rect x="68" y="216" width="130" height="14" rx="2" fill="#111827"/>
+            <text x="133" y="227" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NAMESPACE: shoplite</text>
+
+            <!-- Web Pod -->
+            <rect x="76" y="246" width="170" height="60" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="161" y="270" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">web (2 Replicas)</text>
+            <text x="161" y="284" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Nginx Alpine · Port 80</text>
+            <text x="161" y="296" fill="#34d399" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Non-Root UID 10001 · Path /</text>
+
+            <!-- Catalog API Pod -->
+            <rect x="296" y="246" width="220" height="60" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="406" y="270" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">catalog-api (&gt;= 2 Replicas)</text>
+            <text x="406" y="284" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">FastAPI · Uvicorn · Port 8000</text>
+            <text x="406" y="296" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">W3C Tracing · PDB minAvailable: 1</text>
+
+            <!-- Ingress Routing Connectors -->
+            <path d="M 310,205 V 230 H 161 V 242" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#arrow)"/>
+            <path d="M 406,205 V 242" fill="none" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+
+            <!-- Order Worker Pod -->
+            <rect x="76" y="348" width="180" height="64" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.2"/>
+            <text x="166" y="372" fill="#f8fafc" font-size="11" font-weight="600" text-anchor="middle">order-worker (HPA 1-4)</text>
+            <text x="166" y="386" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Asyncio Reliable Consumer</text>
+            <text x="166" y="398" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Grace: 30s · CPU Target 70%</text>
+
+            <!-- Redis Queue -->
+            <rect x="336" y="348" width="200" height="64" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1.2"/>
+            <text x="436" y="372" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">redis (ClusterIP: 6379)</text>
+            <text x="436" y="386" fill="#fb923c" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">LPUSH orders:pending</text>
+            <text x="436" y="398" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">BRPOPLPUSH orders:processing</text>
+
+            <!-- PostgreSQL StatefulSet -->
+            <rect x="196" y="448" width="240" height="64" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <text x="316" y="472" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">postgres (StatefulSet: 5432)</text>
+            <text x="316" y="486" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">PostgreSQL 16 · PVC: 5Gi</text>
+            <text x="316" y="498" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Auto-Seeded Catalog (&gt;=10 items)</text>
+
+            <!-- Connectors inside shoplite namespace -->
+            <!-- API -> Redis (LPUSH) -->
+            <line x1="436" y1="306" x2="436" y2="344" stroke="#fb923c" stroke-width="1.4" marker-end="url(#arrow-orange)"/>
+            <rect x="444" y="318" width="40" height="12" rx="2" fill="#111827"/>
+            <text x="464" y="327" fill="#fb923c" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">LPUSH</text>
+
+            <!-- Redis -> Worker (BRPOPLPUSH) -->
+            <line x1="336" y1="380" x2="260" y2="380" stroke="#fb923c" stroke-width="1.4" marker-end="url(#arrow-orange)"/>
+            <rect x="272" y="367" width="56" height="12" rx="2" fill="#111827"/>
+            <text x="300" y="376" fill="#fb923c" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">BRPOPLPUSH</text>
+
+            <!-- API -> Postgres (INSERT PENDING) -->
+            <path d="M 330,306 V 444" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow-cyan)"/>
+
+            <!-- Worker -> Postgres (UPDATE COMPLETED) -->
+            <path d="M 166,412 V 480 H 192" fill="none" stroke="#34d399" stroke-width="1.2" marker-end="url(#arrow-emerald)"/>
+
+            <!-- NAMESPACE: monitoring -->
+            <rect x="696" y="222" width="268" height="306" rx="6" fill="rgba(192,132,252,0.02)" stroke="rgba(192,132,252,0.25)" stroke-width="1"/>
+            <rect x="708" y="216" width="150" height="14" rx="2" fill="#111827"/>
+            <text x="783" y="227" fill="#c084fc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.08em">NAMESPACE: monitoring</text>
+
+            <!-- Prometheus & Alertmanager -->
+            <rect x="716" y="246" width="228" height="52" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1"/>
+            <text x="830" y="268" fill="#f8fafc" font-size="10.5" font-weight="600" text-anchor="middle">Prometheus &amp; Alertmanager</text>
+            <text x="830" y="282" fill="#c084fc" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Scrapes /metrics · 5 Alert Rules</text>
+
+            <!-- Loki Log Ingestion -->
+            <rect x="716" y="312" width="228" height="52" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1"/>
+            <text x="830" y="334" fill="#f8fafc" font-size="10.5" font-weight="600" text-anchor="middle">Grafana Loki</text>
+            <text x="830" y="348" fill="#c084fc" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">JSON stdout Logs · trace_id Derived Field</text>
+
+            <!-- Tempo Tracing -->
+            <rect x="716" y="378" width="228" height="52" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1"/>
+            <text x="830" y="400" fill="#f8fafc" font-size="10.5" font-weight="600" text-anchor="middle">Grafana Tempo (OTLP :4317)</text>
+            <text x="830" y="414" fill="#c084fc" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Distributed Spans: API ➔ Queue ➔ Worker</text>
+
+            <!-- Grafana Golden Signals Dashboard -->
+            <rect x="716" y="446" width="228" height="66" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <text x="830" y="468" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">Grafana Golden Signals</text>
+            <text x="830" y="482" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">p50/p95/p99 Latency · RPS · 5xx Rate</text>
+            <text x="830" y="496" fill="#94a3b8" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Queue Depth · Worker Replicas · Saturation</text>
+
+            <!-- Telemetry Connector Lines -->
+            <line x1="516" y1="276" x2="710" y2="276" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow-purple)"/>
+            <path d="M 536,380 H 710" fill="none" stroke="#c084fc" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arrow-purple)"/>
+          </svg>
+        </div>
+
+        <div class="spec-grid">
+          <div class="spec-card">
+            <div class="spec-card-title">🛡️ Security &amp; Trust Boundaries</div>
+            <div class="spec-card-text">Direct public ingress to pods or EC2 instances is strictly prohibited. External traffic enters exclusively via the AWS Application Load Balancer across two Availability Zones, terminating public traffic and forwarding to Ingress on private subnets. Kubernetes <span class="code-term">NetworkPolicy</span> completely isolates PostgreSQL and Redis from unauthorized access.</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-card-title">⚡ High-Integrity Asynchronous Queue</div>
+            <div class="spec-card-text">Orders are accepted instantaneously by <span class="code-term">catalog-api</span>, assigned <span class="code-term">PENDING</span> status, and pushed to Redis list <span class="code-term">orders:pending</span>. The headless worker atomically pops items to <span class="code-term">orders:processing</span> using <span class="code-term">BRPOPLPUSH</span>, executes business logic, updates database state, and cleans up with <span class="code-term">LREM</span>.</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-card-title">🔍 Full-Stack Distributed Observability</div>
+            <div class="spec-card-text">The platform correlates all telemetry signals in Grafana. Requests passing through <span class="code-term">POST /orders</span> inject W3C <span class="code-term">traceparent</span> headers into Redis payloads. The worker extracts the context and emits child spans to Tempo. Single-line JSON logs in Loki link directly to Tempo traces via derived field regex matching.</div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- TAB 2: API LOW-LEVEL DESIGN (LLD)                             -->
+      <!-- ============================================================== -->
+      <section id="tab-api-lld" class="view-card">
+        <div class="canvas-header">
+          <p class="eyebrow">Object-Oriented Architecture · Clean Code</p>
+          <h1 class="canvas-title">API Low-Level Design &amp; SOLID Model</h1>
+          <p class="canvas-desc">Class decomposition, layer isolation (Routers &#8594; Services &#8594; Repositories), abstract queue interfaces, and immutable Pydantic v2 schemas.</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#111827"/>
+            <rect width="100%" height="100%" fill="url(#dotPattern)"/>
+
+            <!-- TIER 1: HTTP ROUTERS -->
+            <rect x="40" y="40" width="280" height="420" rx="8" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.1)" stroke-width="1"/>
+            <rect x="52" y="34" width="160" height="14" rx="2" fill="#111827"/>
+            <text x="132" y="45" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">ROUTERS (HTTP TRANSPORT)</text>
+
+            <!-- ProductRouter -->
+            <rect x="55" y="60" width="250" height="110" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="70" y="82" fill="#38bdf8" font-size="11" font-weight="700">ProductRouter</text>
+            <text x="70" y="98" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ list_products() -&gt; list[ProductOut]</text>
+            <text x="70" y="112" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ get_product(id) -&gt; ProductOut</text>
+            <text x="70" y="132" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace">Dependency: ProductService (Depends)</text>
+            <text x="70" y="146" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace">HTTP Status Codes: 200, 404</text>
+
+            <!-- OrderRouter -->
+            <rect x="55" y="190" width="250" height="125" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="70" y="212" fill="#ffffff" font-size="11" font-weight="700">OrderRouter</text>
+            <text x="70" y="228" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ create_order(dto: OrderCreate) -&gt; 201</text>
+            <text x="70" y="242" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ get_order(id) -&gt; OrderOut</text>
+            <text x="70" y="262" fill="#38bdf8" font-size="7.5" font-family="'Geist Mono', monospace">Dependency: OrderService (Depends)</text>
+            <text x="70" y="276" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace">Injects W3C traceparent header</text>
+            <text x="70" y="290" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace">HTTP Status: 201 Created, 404, 500</text>
+
+            <!-- HealthRouter -->
+            <rect x="55" y="335" width="250" height="105" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="70" y="357" fill="#34d399" font-size="11" font-weight="700">HealthRouter</text>
+            <text x="70" y="373" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ healthz() -&gt; 200 (Liveness)</text>
+            <text x="70" y="387" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ readyz() -&gt; 200 / 503 (Readiness)</text>
+            <text x="70" y="401" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ metrics() -&gt; Prometheus Exposition</text>
+            <text x="70" y="421" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace">Checks DB connection &amp; Redis ping</text>
+
+            <!-- TIER 2: SERVICES & BUSINESS LOGIC -->
+            <rect x="360" y="40" width="280" height="420" rx="8" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.1)" stroke-width="1"/>
+            <rect x="372" y="34" width="170" height="14" rx="2" fill="#111827"/>
+            <text x="457" y="45" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">SERVICES (BUSINESS LOGIC)</text>
+
+            <!-- ProductService -->
+            <rect x="375" y="60" width="250" height="110" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="390" y="82" fill="#34d399" font-size="11" font-weight="700">ProductService</text>
+            <text x="390" y="98" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- repo: ProductRepositoryProtocol</text>
+            <text x="390" y="112" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ get_all_products() -&gt; list</text>
+            <text x="390" y="126" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ get_by_id(id) -&gt; ProductOut</text>
+            <text x="390" y="146" fill="#fb923c" font-size="7.5" font-family="'Geist Mono', monospace">Hook: CHAOS_LATENCY_MS (30% delay)</text>
+
+            <!-- OrderService -->
+            <rect x="375" y="190" width="250" height="125" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+            <text x="390" y="212" fill="#ffffff" font-size="11" font-weight="700">OrderService</text>
+            <text x="390" y="228" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- repo: OrderRepositoryProtocol</text>
+            <text x="390" y="242" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- queue: QueueProducerProtocol</text>
+            <text x="390" y="256" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ create_order(dto) -&gt; OrderOut</text>
+            <text x="390" y="276" fill="#fb923c" font-size="7.5" font-family="'Geist Mono', monospace">Hook: CHAOS_ERROR_RATE (500 inject)</text>
+            <text x="390" y="290" fill="#34d399" font-size="7.5" font-family="'Geist Mono', monospace">Metric: ORDERS_CREATED_TOTAL.inc()</text>
+
+            <!-- QueueProducerProtocol -->
+            <rect x="375" y="335" width="250" height="105" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1.2"/>
+            <text x="390" y="357" fill="#fb923c" font-size="11" font-weight="700">&lt;&lt;interface&gt;&gt; QueueProducer</text>
+            <text x="390" y="373" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ publish(payload: QueuePayloadDTO)</text>
+            <text x="390" y="387" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ get_queue_depth() -&gt; int</text>
+            <text x="390" y="407" fill="#fb923c" font-size="7.5" font-family="'Geist Mono', monospace">Impl: RedisQueueProducer (Default)</text>
+            <text x="390" y="421" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace">Impl: SqsQueueProducer (Bonus 2)</text>
+
+            <!-- TIER 3: DATA ACCESS / REPOSITORIES -->
+            <rect x="680" y="40" width="280" height="420" rx="8" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.1)" stroke-width="1"/>
+            <rect x="692" y="34" width="180" height="14" rx="2" fill="#111827"/>
+            <text x="782" y="45" fill="#fb923c" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">REPOSITORIES &amp; WORKER</text>
+
+            <!-- PostgresProductRepository -->
+            <rect x="695" y="60" width="250" height="90" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="710" y="82" fill="#f8fafc" font-size="11" font-weight="700">ProductRepository</text>
+            <text x="710" y="98" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- session: AsyncSession</text>
+            <text x="710" y="112" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ find_all() -&gt; list[Product]</text>
+            <text x="710" y="126" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ find_by_id(id) -&gt; Product</text>
+
+            <!-- PostgresOrderRepository -->
+            <rect x="695" y="165" width="250" height="100" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)" stroke-width="1"/>
+            <text x="710" y="187" fill="#f8fafc" font-size="11" font-weight="700">OrderRepository</text>
+            <text x="710" y="203" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">- session: AsyncSession</text>
+            <text x="710" y="217" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ create(order: Order) -&gt; Order</text>
+            <text x="710" y="231" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ update_status(id, status) -&gt; bool</text>
+            <text x="710" y="245" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ find_by_id(id) -&gt; Order</text>
+
+            <!-- ReliableOrderConsumer & Processor -->
+            <rect x="695" y="280" width="250" height="160" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+            <text x="710" y="302" fill="#ffffff" font-size="11" font-weight="700">OrderWorker &amp; Processor</text>
+            <text x="710" y="318" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">+ run() -&gt; BRPOPLPUSH loop</text>
+            <text x="710" y="332" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">+ recover_orphaned_orders()</text>
+            <text x="710" y="346" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">+ stop(sig, frame) -&gt; SIGTERM</text>
+            <text x="710" y="366" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace">Simulates work: 1.0 - 2.0s</text>
+            <text x="710" y="380" fill="#fb923c" font-size="7.5" font-family="'Geist Mono', monospace">CHAOS_SLOW_DB: pg_sleep(2)</text>
+            <text x="710" y="394" fill="#fb923c" font-size="7.5" font-family="'Geist Mono', monospace">CHAOS_MEMORY_LEAK: retain 1MB</text>
+            <text x="710" y="414" fill="#34d399" font-size="7.5" font-family="'Geist Mono', monospace">Metrics: orders_processed_total</text>
+
+            <!-- Inter-tier Connectors -->
+            <line x1="305" y1="115" x2="370" y2="115" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-cyan)"/>
+            <line x1="305" y1="250" x2="370" y2="250" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+            <line x1="625" y1="115" x2="690" y2="115" stroke="#34d399" stroke-width="1.2" marker-end="url(#arrow-emerald)"/>
+            <line x1="625" y1="250" x2="690" y2="215" stroke="#34d399" stroke-width="1.2" marker-end="url(#arrow-emerald)"/>
+            <line x1="625" y1="385" x2="690" y2="350" stroke="#fb923c" stroke-width="1.2" marker-end="url(#arrow-orange)"/>
+          </svg>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Responsibility &amp; Boundary Rule</th>
+              <th>Clean Code Standard</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Routers (<span class="code-term">routers/</span>)</strong></td>
+              <td>HTTP deserialization, route parameters, response models, and status codes.</td>
+              <td>Zero database queries; delegates all domain execution to Services.</td>
+            </tr>
+            <tr>
+              <td><strong>Services (<span class="code-term">services/</span>)</strong></td>
+              <td>Business logic, validation, W3C trace header injection, and queue coordination.</td>
+              <td>Depends strictly on Repository and Queue interfaces; unit-testable in isolation.</td>
+            </tr>
+            <tr>
+              <td><strong>Repositories (<span class="code-term">repositories/</span>)</strong></td>
+              <td>Isolates database queries and entity hydration with SQLAlchemy AsyncSession.</td>
+              <td>Fully substitutable with in-memory test doubles (<span class="code-term">LSP</span>).</td>
+            </tr>
+            <tr>
+              <td><strong>Worker Consumer (<span class="code-term">worker/</span>)</strong></td>
+              <td>Manages the reliable Redis queue loop, startup crash recovery sweep, and graceful SIGTERM shutdown.</td>
+              <td>Never exposes public HTTP endpoints; runs as headless non-root consumer.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- TAB 3: USE CASES                                               -->
+      <!-- ============================================================== -->
+      <section id="tab-usecases" class="view-card">
+        <div class="canvas-header">
+          <p class="eyebrow">Functional Model · Actor Interactions</p>
+          <h1 class="canvas-title">System Use Case Modeling</h1>
+          <p class="canvas-desc">Interactions between human actors (Customer, SRE) and automated agents (Kubernetes Kubelet, Prometheus Scraper, ArgoCD).</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1000 460" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#111827"/>
+            <rect width="100%" height="100%" fill="url(#dotPattern)"/>
+
+            <!-- ACTORS COLUMN -->
+            <rect x="40" y="40" width="180" height="380" rx="8" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.1)" stroke-width="1"/>
+            <text x="130" y="65" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">ACTORS</text>
+
+            <rect x="55" y="85" width="150" height="55" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+            <text x="130" y="112" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">Customer / Browser</text>
+            <text x="130" y="126" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">External HTTP User</text>
+
+            <rect x="55" y="165" width="150" height="55" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1"/>
+            <text x="130" y="192" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">Kubernetes Kubelet</text>
+            <text x="130" y="206" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Liveness / Readiness Prober</text>
+
+            <rect x="55" y="245" width="150" height="55" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1"/>
+            <text x="130" y="272" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">Prometheus Scraper</text>
+            <text x="130" y="286" fill="#c084fc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ServiceMonitor Engine</text>
+
+            <rect x="55" y="325" width="150" height="55" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1"/>
+            <text x="130" y="352" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">DevOps / SRE Operator</text>
+            <text x="130" y="366" fill="#fb923c" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">GitOps &amp; Incident Triage</text>
+
+            <!-- USE CASES -->
+            <rect x="280" y="40" width="680" height="380" rx="8" fill="rgba(248,250,252,0.02)" stroke="rgba(248,250,252,0.1)" stroke-width="1"/>
+            <text x="620" y="65" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.1em">SYSTEM USE CASES (CORE CAPABILITIES)</text>
+
+            <!-- Customer Use Cases -->
+            <rect x="300" y="85" width="200" height="38" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.12)" stroke-width="1"/>
+            <text x="400" y="108" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">UC-1: List Catalog (GET /products)</text>
+
+            <rect x="520" y="85" width="220" height="38" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.12)" stroke-width="1"/>
+            <text x="630" y="108" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">UC-2: Single Product (GET /products/:id)</text>
+
+            <rect x="300" y="135" width="200" height="38" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <text x="400" y="158" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">UC-3: Place Order (POST /orders)</text>
+
+            <rect x="520" y="135" width="220" height="38" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.12)" stroke-width="1"/>
+            <text x="630" y="158" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">UC-4: Poll Status (GET /orders/:id)</text>
+
+            <!-- Asynchronous Order Fulfillment -->
+            <rect x="755" y="110" width="185" height="55" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1.2"/>
+            <text x="847" y="134" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">UC-5: Async Fulfillment</text>
+            <text x="847" y="148" fill="#fb923c" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Worker Consumer Process</text>
+
+            <!-- Kubelet Use Cases -->
+            <rect x="300" y="200" width="200" height="38" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1"/>
+            <text x="400" y="223" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">UC-6: Liveness Probe (/healthz)</text>
+
+            <rect x="520" y="200" width="220" height="38" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1"/>
+            <text x="630" y="223" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">UC-7: Readiness Probe (/readyz)</text>
+
+            <!-- Prometheus Use Cases -->
+            <rect x="300" y="260" width="440" height="38" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1"/>
+            <text x="520" y="283" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">UC-8: Scrape Application &amp; Cluster Metrics (GET /metrics)</text>
+
+            <!-- DevOps Use Cases -->
+            <rect x="300" y="325" width="310" height="42" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1"/>
+            <text x="455" y="350" fill="#f8fafc" font-size="10" font-weight="500" text-anchor="middle">UC-9: GitOps Declarative Reconciliation (ArgoCD)</text>
+
+            <rect x="630" y="325" width="310" height="42" rx="6" fill="#1e293b" stroke="#e879f9" stroke-width="1.2"/>
+            <text x="785" y="350" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">UC-10: Fault Investigation &amp; RCA (Grafana)</text>
+
+            <!-- Flow Connectors -->
+            <line x1="205" y1="112" x2="295" y2="104" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-cyan)"/>
+            <line x1="205" y1="112" x2="295" y2="154" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+            <line x1="500" y1="154" x2="745" y2="137" stroke="#fb923c" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#arrow-orange)"/>
+
+            <line x1="205" y1="192" x2="295" y2="219" stroke="#34d399" stroke-width="1.2" marker-end="url(#arrow-emerald)"/>
+            <line x1="205" y1="272" x2="295" y2="279" stroke="#c084fc" stroke-width="1.2" marker-end="url(#arrow-purple)"/>
+            <line x1="205" y1="352" x2="295" y2="346" stroke="#fb923c" stroke-width="1.2" marker-end="url(#arrow-orange)"/>
+          </svg>
+        </div>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- TAB 4: DISTRIBUTED TRACE SEQUENCE                             -->
+      <!-- ============================================================== -->
+      <section id="tab-trace-sequence" class="view-card">
+        <div class="canvas-header">
+          <p class="eyebrow">Distributed Tracing · W3C TraceContext</p>
+          <h1 class="canvas-title">Order Lifecycle Distributed Trace Sequence</h1>
+          <p class="canvas-desc">Unbroken trace span propagation: Client &#8594; ALB &#8594; FastAPI (Root Span) &#8594; Redis Queue (Payload Context) &#8594; Worker (Child Span) &#8594; PostgreSQL &#8594; Grafana Tempo.</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1000 520" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#111827"/>
+            <rect width="100%" height="100%" fill="url(#dotPattern)"/>
+
+            <!-- LIFELINE HEADERS -->
+            <!-- 1. Client -->
+            <rect x="40" y="30" width="110" height="34" rx="4" fill="#1e293b" stroke="rgba(248,250,252,0.15)"/>
+            <text x="95" y="52" fill="#ffffff" font-size="10" font-weight="600" text-anchor="middle">Browser Client</text>
+            <line x1="95" y1="64" x2="95" y2="480" stroke="rgba(248,250,252,0.12)" stroke-dasharray="4,4"/>
+
+            <!-- 2. ALB & Ingress -->
+            <rect x="180" y="30" width="120" height="34" rx="4" fill="#1e293b" stroke="rgba(248,250,252,0.15)"/>
+            <text x="240" y="52" fill="#38bdf8" font-size="10" font-weight="600" text-anchor="middle">ALB / Ingress</text>
+            <line x1="240" y1="64" x2="240" y2="480" stroke="rgba(248,250,252,0.12)" stroke-dasharray="4,4"/>
+
+            <!-- 3. catalog-api -->
+            <rect x="330" y="30" width="130" height="34" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <text x="395" y="52" fill="#38bdf8" font-size="10" font-weight="700" text-anchor="middle">catalog-api</text>
+            <line x1="395" y1="64" x2="395" y2="480" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4,4"/>
+
+            <!-- 4. Redis Queue -->
+            <rect x="490" y="30" width="120" height="34" rx="4" fill="#1e293b" stroke="#fb923c" stroke-width="1.2"/>
+            <text x="550" y="52" fill="#fb923c" font-size="10" font-weight="600" text-anchor="middle">Redis Queue</text>
+            <line x1="550" y1="64" x2="550" y2="480" stroke="#fb923c" stroke-dasharray="4,4"/>
+
+            <!-- 5. order-worker -->
+            <rect x="640" y="30" width="130" height="34" rx="4" fill="#1e293b" stroke="#34d399" stroke-width="1.2"/>
+            <text x="705" y="52" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle">order-worker</text>
+            <line x1="705" y1="64" x2="705" y2="480" stroke="#34d399" stroke-width="1" stroke-dasharray="4,4"/>
+
+            <!-- 6. PostgreSQL -->
+            <rect x="800" y="30" width="110" height="34" rx="4" fill="#1e293b" stroke="rgba(248,250,252,0.15)"/>
+            <text x="855" y="52" fill="#f8fafc" font-size="10" font-weight="600" text-anchor="middle">PostgreSQL</text>
+            <line x1="855" y1="64" x2="855" y2="480" stroke="rgba(248,250,252,0.12)" stroke-dasharray="4,4"/>
+
+            <!-- 7. Grafana Tempo -->
+            <rect x="925" y="30" width="60" height="34" rx="4" fill="#1e293b" stroke="#c084fc"/>
+            <text x="955" y="52" fill="#c084fc" font-size="9" font-weight="700" text-anchor="middle">Tempo</text>
+            <line x1="955" y1="64" x2="955" y2="480" stroke="#c084fc" stroke-dasharray="4,4"/>
+
+            <!-- SEQUENCE STEPS -->
+            <!-- Step 1: POST /orders -->
+            <line x1="95" y1="90" x2="235" y2="90" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-cyan)"/>
+            <line x1="240" y1="90" x2="390" y2="90" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-cyan)"/>
+            <text x="165" y="84" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">1. POST /api/orders</text>
+
+            <!-- API Span Activation Box -->
+            <rect x="390" y="90" width="10" height="110" fill="#38bdf8" rx="2"/>
+
+            <!-- Step 2: DB Insert PENDING -->
+            <line x1="400" y1="120" x2="850" y2="120" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-cyan)"/>
+            <text x="625" y="114" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">2. INSERT orders (status='PENDING')</text>
+
+            <!-- Step 3: LPUSH with traceparent -->
+            <line x1="400" y1="150" x2="545" y2="150" stroke="#fb923c" stroke-width="1.4" marker-end="url(#arrow-orange)"/>
+            <text x="472" y="144" fill="#fb923c" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">3. LPUSH + W3C traceparent</text>
+
+            <!-- Step 4: 201 Created to Client & Export Spans -->
+            <line x1="390" y1="180" x2="100" y2="180" stroke="#34d399" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#arrow-emerald)"/>
+            <text x="245" y="174" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">4. 201 Created {"order_id": 1042}</text>
+            <line x1="400" y1="195" x2="950" y2="195" stroke="#c084fc" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#arrow-purple)"/>
+
+            <!-- Step 5: Worker Atomic BRPOPLPUSH -->
+            <line x1="700" y1="230" x2="555" y2="230" stroke="#fb923c" stroke-width="1.2" marker-end="url(#arrow-orange)"/>
+            <text x="625" y="224" fill="#fb923c" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">5. BRPOPLPUSH (Atomic Pop)</text>
+
+            <!-- Worker Span Activation Box -->
+            <rect x="700" y="240" width="10" height="150" fill="#34d399" rx="2"/>
+
+            <!-- Step 6: Worker DB Update PROCESSING -->
+            <line x1="710" y1="260" x2="850" y2="260" stroke="#34d399" stroke-width="1.2" marker-end="url(#arrow-emerald)"/>
+            <text x="780" y="254" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">6. UPDATE status='PROCESSING'</text>
+
+            <!-- Step 7: Worker Simulated Work Box -->
+            <rect x="720" y="278" width="105" height="26" rx="4" fill="#1e293b" stroke="rgba(248,250,252,0.1)"/>
+            <text x="772" y="295" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Fulfillment Delay (1-2s)</text>
+
+            <!-- Step 8: Worker DB Update COMPLETED -->
+            <line x1="710" y1="330" x2="850" y2="330" stroke="#34d399" stroke-width="1.4" marker-end="url(#arrow-emerald)"/>
+            <text x="780" y="324" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">7. UPDATE status='COMPLETED'</text>
+
+            <!-- Step 9: LREM Cleanup from Redis -->
+            <line x1="700" y1="360" x2="555" y2="360" stroke="#fb923c" stroke-width="1.2" marker-end="url(#arrow-orange)"/>
+            <text x="625" y="354" fill="#fb923c" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">8. LREM orders:processing</text>
+            <line x1="710" y1="385" x2="950" y2="385" stroke="#c084fc" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#arrow-purple)"/>
+
+            <!-- Step 10: Client Polling Order Status -->
+            <line x1="95" y1="430" x2="390" y2="430" stroke="#38bdf8" stroke-width="1.2" marker-end="url(#arrow-cyan)"/>
+            <text x="240" y="424" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">9. GET /api/orders/1042</text>
+
+            <line x1="395" y1="445" x2="850" y2="445" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow)"/>
+            <line x1="390" y1="465" x2="100" y2="465" stroke="#34d399" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#arrow-emerald)"/>
+            <text x="240" y="460" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">10. 200 OK {"status": "COMPLETED"}</text>
+          </svg>
+        </div>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- TAB 5: AWS NETWORK & SUBSETS                                  -->
+      <!-- ============================================================== -->
+      <section id="tab-aws-network" class="view-card">
+        <div class="canvas-header">
+          <p class="eyebrow">Cloud Infrastructure · Terraform Architecture</p>
+          <h1 class="canvas-title">AWS VPC &amp; Subnet Network Perimeter</h1>
+          <p class="canvas-desc">Multi-Availability Zone layout: Public Subnets hosting ALB &amp; NAT, Private Subnets hosting Kubernetes compute with zero direct internet access.</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#111827"/>
+            <rect width="100%" height="100%" fill="url(#dotPattern)"/>
+
+            <!-- AWS REGION -->
+            <rect x="30" y="30" width="940" height="360" rx="8" fill="rgba(248,250,252,0.015)" stroke="rgba(248,250,252,0.1)" stroke-width="1"/>
+            <text x="120" y="52" fill="#64748b" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.1em">AWS REGION (us-east-1)</text>
+
+            <!-- AZ 1 -->
+            <rect x="50" y="70" width="430" height="300" rx="6" fill="rgba(248,250,252,0.01)" stroke="rgba(248,250,252,0.06)" stroke-width="1"/>
+            <text x="130" y="90" fill="#38bdf8" font-size="9" font-family="'Geist Mono', monospace">AVAILABILITY ZONE A (us-east-1a)</text>
+
+            <!-- Public Subnet A -->
+            <rect x="70" y="110" width="390" height="100" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+            <text x="90" y="132" fill="#ffffff" font-size="11" font-weight="600">Public Subnet A (10.0.1.0/24)</text>
+            <text x="90" y="148" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace">Attached to Internet Gateway (IGW)</text>
+            <text x="90" y="166" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Hosts: ALB Node A (Ingress Ports 80 / 443)</text>
+            <text x="90" y="184" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Security Group: sg-alb (Ingress from 0.0.0.0/0)</text>
+
+            <!-- Private Subnet A -->
+            <rect x="70" y="235" width="390" height="115" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1"/>
+            <text x="90" y="257" fill="#ffffff" font-size="11" font-weight="600">Private Subnet A (10.0.10.0/24)</text>
+            <text x="90" y="273" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">Zero Public IPs · Outbound via NAT</text>
+            <text x="90" y="291" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Hosts: K8s Control Plane EC2 &amp; Worker Node 1</text>
+            <text x="90" y="309" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Admin Access: AWS SSM Session Manager IAM Role</text>
+
+            <!-- AZ 2 -->
+            <rect x="510" y="70" width="430" height="300" rx="6" fill="rgba(248,250,252,0.01)" stroke="rgba(248,250,252,0.06)" stroke-width="1"/>
+            <text x="590" y="90" fill="#38bdf8" font-size="9" font-family="'Geist Mono', monospace">AVAILABILITY ZONE B (us-east-1b)</text>
+
+            <!-- Public Subnet B -->
+            <rect x="530" y="110" width="390" height="100" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1"/>
+            <text x="550" y="132" fill="#ffffff" font-size="11" font-weight="600">Public Subnet B (10.0.2.0/24)</text>
+            <text x="550" y="148" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace">Attached to Internet Gateway (IGW)</text>
+            <text x="550" y="166" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Hosts: ALB Node B &amp; NAT Gateway EIP</text>
+            <text x="550" y="184" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Default Route: 0.0.0.0/0 -&gt; igw-xxxx</text>
+
+            <!-- Private Subnet B -->
+            <rect x="530" y="235" width="390" height="115" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1"/>
+            <text x="550" y="257" fill="#ffffff" font-size="11" font-weight="600">Private Subnet B (10.0.20.0/24)</text>
+            <text x="550" y="273" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace">Zero Public IPs · Route: 0.0.0.0/0 -&gt; nat-xxxx</text>
+            <text x="550" y="291" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Hosts: K8s Worker Node 2 EC2</text>
+            <text x="550" y="309" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace">Security Group: Ingress from sg-alb NodePort Only</text>
+          </svg>
+        </div>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- TAB 6: GITOPS & CI/CD                                         -->
+      <!-- ============================================================== -->
+      <section id="tab-gitops" class="view-card">
+        <div class="canvas-header">
+          <p class="eyebrow">Continuous Delivery · Automated Reconciliation</p>
+          <h1 class="canvas-title">GitOps Delivery &amp; Self-Healing Pipeline</h1>
+          <p class="canvas-desc">Strict separation of concerns: GitHub Actions builds artifacts; ArgoCD declaratively synchronizes desired state from Git with automated self-healing.</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1000 360" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#111827"/>
+            <rect width="100%" height="100%" fill="url(#dotPattern)"/>
+
+            <!-- STEP 1: DEV PUSH -->
+            <rect x="40" y="80" width="160" height="90" rx="6" fill="#1e293b" stroke="rgba(248,250,252,0.15)"/>
+            <text x="120" y="110" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">1. Git Commit &amp; Push</text>
+            <text x="120" y="126" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Repo: shoplite-app</text>
+            <text x="120" y="142" fill="#64748b" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Branch: main</text>
+
+            <!-- STEP 2: CI PIPELINE -->
+            <rect x="250" y="60" width="220" height="130" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="360" y="86" fill="#38bdf8" font-size="12" font-weight="700" text-anchor="middle">2. GitHub Actions CI</text>
+            <text x="360" y="104" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Linters (Hadolint, Helm)</text>
+            <text x="360" y="118" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Pytest Contract Unit Tests</text>
+            <text x="360" y="132" fill="#fb923c" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; Trivy Scan (Fail on CRITICAL)</text>
+            <text x="360" y="146" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">&#10003; AWS OIDC ECR Publish</text>
+            <text x="360" y="164" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">NEVER runs kubectl apply</text>
+
+            <!-- STEP 3: ECR -->
+            <rect x="520" y="80" width="160" height="90" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1"/>
+            <text x="600" y="110" fill="#ffffff" font-size="11" font-weight="600" text-anchor="middle">3. Amazon ECR</text>
+            <text x="600" y="126" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Images tagged with SHA</text>
+            <text x="600" y="142" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">web, api, worker</text>
+
+            <!-- STEP 4: GITOPS REPO -->
+            <rect x="250" y="230" width="220" height="90" rx="6" fill="#1e293b" stroke="#fb923c" stroke-width="1.2"/>
+            <text x="360" y="258" fill="#fb923c" font-size="11" font-weight="700" text-anchor="middle">4. shoplite-gitops Repo</text>
+            <text x="360" y="274" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">CI commits image.tag SHA</text>
+            <text x="360" y="290" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">envs/dev/ &amp; envs/prod/</text>
+
+            <!-- STEP 5: ARGOCD -->
+            <rect x="520" y="230" width="180" height="90" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1.5"/>
+            <text x="610" y="258" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">5. ArgoCD Controller</text>
+            <text x="610" y="274" fill="#34d399" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Dev: Automated Sync</text>
+            <text x="610" y="288" fill="#fb923c" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Prod: Manual Gate</text>
+            <text x="610" y="302" fill="#c084fc" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Self-Healing Enabled</text>
+
+            <!-- STEP 6: K8S RECONCILIATION -->
+            <rect x="750" y="230" width="210" height="90" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.2"/>
+            <text x="855" y="258" fill="#ffffff" font-size="11" font-weight="700" text-anchor="middle">6. Kubernetes Cluster</text>
+            <text x="855" y="274" fill="#38bdf8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">shoplite namespace</text>
+            <text x="855" y="290" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Reverts manual drift in &lt;15s</text>
+
+            <!-- Connectors -->
+            <line x1="200" y1="125" x2="245" y2="125" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+            <line x1="470" y1="125" x2="515" y2="125" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+            <path d="M 360,190 V 225" fill="none" stroke="#fb923c" stroke-width="1.2" marker-end="url(#arrow-orange)"/>
+            <line x1="470" y1="275" x2="515" y2="275" stroke="#c084fc" stroke-width="1.4" marker-end="url(#arrow-purple)"/>
+            <line x1="700" y1="275" x2="745" y2="275" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+          </svg>
+        </div>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- TAB 7: DISTRIBUTED OBSERVABILITY                              -->
+      <!-- ============================================================== -->
+      <section id="tab-observability" class="view-card">
+        <div class="canvas-header">
+          <p class="eyebrow">Golden Signals · Alerting &amp; Triage</p>
+          <h1 class="canvas-title">Distributed Observability &amp; Telemetry Mesh</h1>
+          <p class="canvas-desc">Instantaneous root-cause investigation under 2 minutes: Alertmanager &#8594; Golden Signals Dashboard &#8594; Loki JSON Logs &#8594; Tempo Distributed Trace Spans.</p>
+        </div>
+
+        <div class="diagram-frame">
+          <svg viewBox="0 0 1000 380" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100%" height="100%" fill="#111827"/>
+            <rect width="100%" height="100%" fill="url(#dotPattern)"/>
+
+            <!-- STEP 1: ALERT -->
+            <rect x="40" y="80" width="200" height="110" rx="6" fill="#1e293b" stroke="#f43f5e" stroke-width="1.5"/>
+            <text x="140" y="106" fill="#f43f5e" font-size="11" font-weight="700" text-anchor="middle">1. Alertmanager Fires</text>
+            <text x="140" y="124" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">HighErrorRate (5xx &gt; 5%)</text>
+            <text x="140" y="138" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">HighLatency (p95 &gt; 1.0s)</text>
+            <text x="140" y="152" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">QueueBacklog (depth &gt; 50)</text>
+            <text x="140" y="172" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Links to repository runbook_url</text>
+
+            <!-- STEP 2: DASHBOARD -->
+            <rect x="290" y="80" width="200" height="110" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="390" y="106" fill="#38bdf8" font-size="11" font-weight="700" text-anchor="middle">2. Golden Signals</text>
+            <text x="390" y="124" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Latency: p50, p95, p99</text>
+            <text x="390" y="138" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Traffic: Requests Per Second</text>
+            <text x="390" y="152" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Errors: HTTP 5xx percentage</text>
+            <text x="390" y="166" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Queue Depth &amp; Worker HPA</text>
+
+            <!-- STEP 3: LOKI LOGS -->
+            <rect x="540" y="80" width="200" height="110" rx="6" fill="#1e293b" stroke="#c084fc" stroke-width="1.5"/>
+            <text x="640" y="106" fill="#c084fc" font-size="11" font-weight="700" text-anchor="middle">3. Loki Log Inspection</text>
+            <text x="640" y="124" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Filter: level='ERROR'</text>
+            <text x="640" y="138" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Filter: service='catalog-api'</text>
+            <text x="640" y="156" fill="#c084fc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Derived Field: trace_id</text>
+            <text x="640" y="172" fill="#64748b" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Click trace_id -&gt; Jump to Tempo</text>
+
+            <!-- STEP 4: TEMPO TRACES -->
+            <rect x="790" y="80" width="180" height="110" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+            <text x="880" y="106" fill="#34d399" font-size="11" font-weight="700" text-anchor="middle">4. Tempo Trace Span</text>
+            <text x="880" y="124" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Root: HTTP POST /orders</text>
+            <text x="880" y="138" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Child: worker_process_order</text>
+            <text x="880" y="152" fill="#f8fafc" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">Span: postgres.execute</text>
+            <text x="880" y="172" fill="#34d399" font-size="7.5" font-family="'Geist Mono', monospace" text-anchor="middle">Pinpoint delay or fault</text>
+
+            <!-- Investigation Arrows -->
+            <line x1="240" y1="135" x2="285" y2="135" stroke="#38bdf8" stroke-width="1.4" marker-end="url(#arrow-cyan)"/>
+            <line x1="490" y1="135" x2="535" y2="135" stroke="#c084fc" stroke-width="1.4" marker-end="url(#arrow-purple)"/>
+            <line x1="740" y1="135" x2="785" y2="135" stroke="#34d399" stroke-width="1.4" marker-end="url(#arrow-emerald)"/>
+
+            <!-- STEP 5: RECOVERY -->
+            <rect x="350" y="240" width="300" height="80" rx="6" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+            <text x="500" y="268" fill="#ffffff" font-size="12" font-weight="700" text-anchor="middle">5. GitOps Revert &amp; Recovery</text>
+            <text x="500" y="286" fill="#34d399" font-size="8.5" font-family="'Geist Mono', monospace" text-anchor="middle">Revert git commit in shoplite-gitops</text>
+            <text x="500" y="302" fill="#94a3b8" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle">ArgoCD synchronizes &amp; resolves issue</text>
+
+            <!-- Path to Recovery -->
+            <path d="M 880,190 V 280 H 655" fill="none" stroke="#34d399" stroke-width="1.4" stroke-dasharray="4,4" marker-end="url(#arrow-emerald)"/>
+          </svg>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    function showTab(tabId, btn) {
+      // Deactivate panels
+      document.querySelectorAll('.view-card').forEach(panel => {
+        panel.classList.remove('active');
+      });
+
+      // Deactivate nav items
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      // Activate selected panel and button
+      const targetPanel = document.getElementById(tabId);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+      }
+      if (btn) {
+        btn.classList.add('active');
+      }
+    }
+  </script>
+</body>
+</html>

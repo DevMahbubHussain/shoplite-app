@@ -82,3 +82,9 @@ PRD/
 
 /PRD
 PRD/
+
+# Other
+.DS_Store
+Thumbs.db
+.agents/
+skills-lock.json
