@@ -81,6 +81,9 @@ Before marking any milestone or question complete, execute specific verification
 - **Two Separate Repositories:**
   1. `shoplite-app`: Application source code, Dockerfiles, Terraform modules, Ansible playbooks, Helm chart, monitoring dashboards, alert rules, runbooks, and CI workflows.
   2. `shoplite-gitops`: ArgoCD Application manifests and environment-specific Helm values (`envs/dev/values.yaml`, `envs/prod/values.yaml`).
+- **Feature-Based Branch Naming (Strict):**
+  - All branches MUST be named descriptively based on the specific domain feature being built, using the prefix `feature/<kebab-case-feature-name>` (e.g. `feature/catalog-api`, `feature/order-worker-queue`, `feature/linux-hardening`, `feature/aws-vpc-infra`, `feature/k8s-helm-workloads`, `feature/observability-stack`, `feature/gitops-delivery`).
+  - **Prohibition of Phase/Milestone Branch Names:** Generic, numbered, or phase-based branch names (e.g. `phase1`, `phase-1`, `phase2`, `milestone-1`, `step1`) are **strictly forbidden**. Every branch name must communicate the functional domain scope.
 - **Commits Only On Explicit Request:** Never run `git commit` or `git push` on your own initiative. Wait for explicit user authorization.
 - **Conventional Commits:** Write clean, structured commit messages following Conventional Commits format (e.g. `feat(api): implement distributed trace propagation`, `fix(worker): handle SIGTERM during order commit`).
 
@@ -243,6 +246,44 @@ Testing follows a disciplined 3-tier strategy combining Test-Driven Development 
      4. Polls the order until its status reaches `COMPLETED`.
      5. Exits with non-zero code on any failure.
    - **Milestone 1 Gate:** The command `make up && make smoke` MUST pass cleanly on a clean machine before considering Question 1 and Question 2 complete.
+
+### C19. Strict Canonical Directory Structure & Hierarchy
+All code, configurations, playbooks, manifests, and documentation MUST strictly conform to the following canonical directory layout. No ad-hoc, miscellaneous, or stray root folders are permitted:
+
+```
+shoplite-app/
+├── services/
+│   ├── web/                    # Static frontend (Nginx, HTML/JS, Dockerfile)
+│   ├── catalog-api/            # FastAPI REST API (app/, tests/, Dockerfile)
+│   └── order-worker/           # Asyncio queue consumer (worker/, Dockerfile)
+├── docker-compose.yml          # Root development composition (all 5 services)
+├── Makefile                    # Standard targets: build, up, down, test, smoke
+├── scripts/
+│   └── smoke-test.sh           # End-to-end automated smoke test probe
+├── linux/
+│   ├── sshd_config             # Hardened SSH daemon configuration
+│   ├── systemd/                # shoplite-backup.service & timer
+│   ├── firewall/               # UFW rules & port lockdown verification
+│   └── evidence/               # Terminal screenshots and command outputs
+├── terraform/
+│   └── modules/
+│       ├── network/            # VPC, 2 Public & 2 Private Subnets, IGW, NAT
+│       ├── compute/            # Control plane & Worker EC2s, SSM IAM roles
+│       ├── alb/                # Public ALB, Listeners, Target Groups
+│       └── ecr/                # Amazon ECR repositories
+├── ansible/                    # Hardening, containerd, and kubeadm playbooks
+├── helm/
+│   └── shoplite/               # Single unified Helm chart (Chart.yaml, templates, values)
+├── monitoring/
+│   ├── dashboards/             # Golden Signals Grafana dashboards (JSON as code)
+│   ├── alert-rules/            # Alertmanager alerts (alerts.yaml)
+│   └── runbooks/               # Remediation runbooks (high-error-rate.md, etc.)
+├── .github/
+│   └── workflows/              # GitHub Actions CI (OIDC, Trivy, GitOps update) & PR
+└── docs/
+    ├── architecture-diagram    # Architecture diagrams & topology documentation
+    └── RCA                     # Root Cause Analysis incident reports (RCA_REPORT.md)
+```
 
 ---
 
@@ -435,6 +476,8 @@ flowchart TD
 | **Code Architecture & Design** | Strict OOP & SOLID (Routers $\to$ Services $\to$ Repositories), Dependency Injection via FastAPI `Depends()`, Pydantic v2 DTOs |
 | **Clean Code & Smell Prevention** | Self-documenting code, short methods ($\le 25$ lines), Enums/Constants (no magic values), zero narrative comments |
 | **Pragmatic Simplicity** | No over-engineering, zero speculative wrappers/factories (YAGNI/KISS), flat dependency graphs, developer-friendly |
+| **Directory Structure** | Strict canonical layout (`services/`, `linux/`, `terraform/`, `ansible/`, `helm/`, `monitoring/`, `docs/`) |
+| **Branch Naming Standard** | Feature-based only (`feature/<name>`); strictly no phase/milestone numbers (`phase1`, `phase2`) |
 | **Testing Strategy** | 3-Tier: Contract-First TDD (API), Scenario-Driven TDD (Worker), Probe-Driven Smoke Testing (`make smoke`) |
 | **Worker Engine** | Python Asyncio loop with signal handlers (`SIGTERM`, `SIGINT`) |
 | **Queue Pattern** | Reliable Redis List (`LPUSH` $\to$ `BRPOPLPUSH` $\to$ `LREM`) with startup orphan recovery sweep |
