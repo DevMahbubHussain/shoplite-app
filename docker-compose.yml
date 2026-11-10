@@ -1,0 +1,114 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: shoplite-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shoplite_db
+      POSTGRES_USER: shoplite_user
+      POSTGRES_PASSWORD: shoplite_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shoplite_user -d shoplite_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - shoplite-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: shoplite-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - shoplite-net
+
+  catalog-api:
+    build:
+      context: ./services/catalog-api
+      dockerfile: Dockerfile
+    container_name: shoplite-catalog-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://shoplite_user:shoplite_password@postgres:5432/shoplite_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      LOG_LEVEL: INFO
+      CHAOS_LATENCY_MS: 0
+      CHAOS_ERROR_RATE: 0.0
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - shoplite-net
+
+  order-worker:
+    build:
+      context: ./services/order-worker
+      dockerfile: Dockerfile
+    container_name: shoplite-order-worker
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://shoplite_user:shoplite_password@postgres:5432/shoplite_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      LOG_LEVEL: INFO
+      CHAOS_SLOW_DB: "false"
+      CHAOS_MEMORY_LEAK: "false"
+    ports:
+      - "9102:9102"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      catalog-api:
+        condition: service_healthy
+    networks:
+      - shoplite-net
+
+  web:
+    build:
+      context: ./services/web
+      dockerfile: Dockerfile
+    container_name: shoplite-web
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      catalog-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - shoplite-net
+
+volumes:
+  postgres_data:
+    name: shoplite_postgres_data
+
+networks:
+  shoplite-net:
+    name: shoplite-network
