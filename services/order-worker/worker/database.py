@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.config import worker_settings
+from worker.config import worker_settings
 
 engine = create_async_engine(
     worker_settings.DATABASE_URL,
@@ -20,7 +20,11 @@ async_session_factory = async_sessionmaker(
 
 async def update_order_status(order_id: int, status: str) -> bool:
     stmt = text(
-        "UPDATE orders SET status = :status, updated_at = :updated_at WHERE id = :order_id"
+        "UPDATE orders "
+        "SET status = :status, "
+        "    updated_at = :updated_at, "
+        "    completed_at = CASE WHEN :is_completed THEN :updated_at ELSE completed_at END "
+        "WHERE id = :order_id"
     )
     async with async_session_factory() as session:
         async with session.begin():
@@ -28,6 +32,7 @@ async def update_order_status(order_id: int, status: str) -> bool:
                 stmt,
                 {
                     "status": status,
+                    "is_completed": status == "COMPLETED",
                     "updated_at": datetime.now(timezone.utc),
                     "order_id": order_id,
                 },

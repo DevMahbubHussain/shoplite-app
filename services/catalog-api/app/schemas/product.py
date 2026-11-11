@@ -9,10 +9,6 @@ class ProductBase(BaseModel):
     stock: int = Field(default=0, ge=0)
 
 
-class ProductCreate(ProductBase):
-    pass
-
-
 class ProductOut(ProductBase):
     model_config = ConfigDict(from_attributes=True)
 

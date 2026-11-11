@@ -20,7 +20,9 @@ class WorkerSettings(BaseSettings):
     OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://tempo:4318/v1/traces"
     OTEL_ENABLED: bool = False
 
-    PROCESSING_DELAY_SECONDS: float = 1.0
+    PROCESSING_DELAY_MIN_SECONDS: float = 1.0
+    PROCESSING_DELAY_MAX_SECONDS: float = 2.0
+    RETRY_DELAY_SECONDS: float = 1.0
 
     CHAOS_SLOW_DB: bool = False
     CHAOS_MEMORY_LEAK: bool = False

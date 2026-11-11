@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.instrumentation.redis import RedisInstrumentor
 
 from app.config import settings
 from app.database import async_session_factory, engine
@@ -19,13 +21,6 @@ from app.services.catalog_service import CatalogService
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.SERVICE_NAME} in {settings.ENVIRONMENT} mode")
-
-    if settings.OTEL_ENABLED:
-        init_tracer(
-            service_name=settings.SERVICE_NAME,
-            endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
-            enabled=True,
-        )
 
     try:
         async with engine.begin() as conn:
@@ -46,6 +41,12 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 
+init_tracer(
+    service_name=settings.SERVICE_NAME,
+    endpoint=settings.OTEL_EXPORTER_OTLP_ENDPOINT,
+    enabled=settings.OTEL_ENABLED,
+)
+
 app = FastAPI(
     title="ShopLite Catalog API",
     version="1.0.0",
@@ -55,14 +56,14 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(MetricsMiddleware)
-app.add_middleware(ChaosMiddleware)
 
-# Root level endpoints
+# Chaos sits innermost so Metrics records chaos-injected 500s and latency
+app.add_middleware(ChaosMiddleware)
+app.add_middleware(MetricsMiddleware)
+
 app.include_router(probes_router)
 app.include_router(products_router)
 app.include_router(orders_router)
@@ -71,3 +72,6 @@ app.include_router(orders_router)
 app.include_router(probes_router, prefix="/api")
 app.include_router(products_router, prefix="/api")
 app.include_router(orders_router, prefix="/api")
+
+FastAPIInstrumentor.instrument_app(app)
+RedisInstrumentor().instrument()
