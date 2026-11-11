@@ -225,8 +225,8 @@ curl -s http://localhost:8000/readyz
 curl -s http://localhost:8000/metrics | grep -E "(http_requests|orders_|order_queue)"
 
 # Database inspection (Verify >= 10 seeded products)
-docker compose exec postgres psql -U shoplite -d shoplite_db -c "SELECT id, name, price, stock FROM products;"
-docker compose exec postgres psql -U shoplite -d shoplite_db -c "SELECT id, product_id, quantity, status, completed_at FROM orders ORDER BY id DESC LIMIT 5;"
+docker compose exec postgres psql -U shoplite_user -d shoplite_db -c "SELECT id, name, price, stock FROM products;"
+docker compose exec postgres psql -U shoplite_user -d shoplite_db -c "SELECT id, product_id, quantity, status, completed_at FROM orders ORDER BY id DESC LIMIT 5;"
 
 # Redis queue inspection
 docker compose exec redis redis-cli LLEN orders:pending

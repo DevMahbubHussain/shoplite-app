@@ -7,8 +7,6 @@ services:
       POSTGRES_DB: shoplite_db
       POSTGRES_USER: shoplite_user
       POSTGRES_PASSWORD: shoplite_password
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,8 +21,6 @@ services:
     image: redis:7-alpine
     container_name: shoplite-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -80,8 +76,6 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-      catalog-api:
         condition: service_healthy
     networks:
       - shoplite-net
