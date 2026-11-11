@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shoplite.fullname" . }}-order-worker
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: order-worker
+spec:
+  replicas: {{ .Values.orderWorker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "shoplite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: order-worker
+  template:
+    metadata:
+      labels:
+        {{- include "shoplite.labels" . | nindent 8 }}
+        app.kubernetes.io/component: order-worker
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.orderWorker.terminationGracePeriodSeconds | default 30 }}
+      securityContext:
+        runAsNonRoot: {{ .Values.orderWorker.securityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.orderWorker.securityContext.runAsUser }}
+        fsGroup: {{ .Values.orderWorker.securityContext.runAsUser }}
+      containers:
+        - name: order-worker
+          image: "{{ .Values.orderWorker.image.repository }}:{{ .Values.orderWorker.image.tag }}"
+          imagePullPolicy: {{ .Values.orderWorker.image.pullPolicy }}
+          securityContext:
+            readOnlyRootFilesystem: {{ .Values.orderWorker.securityContext.readOnlyRootFilesystem }}
+            allowPrivilegeEscalation: {{ .Values.orderWorker.securityContext.allowPrivilegeEscalation }}
+            capabilities:
+              {{- toYaml .Values.orderWorker.securityContext.capabilities | nindent 14 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "shoplite.fullname" . }}-config
+            - secretRef:
+                name: {{ include "shoplite.fullname" . }}-secrets
+          env:
+            - name: CHAOS_SLOW_DB_MS
+              value: {{ .Values.orderWorker.chaos.chaosSlowDbMs | quote }}
+            - name: CHAOS_MEMORY_LEAK_MB
+              value: {{ .Values.orderWorker.chaos.chaosMemoryLeakMb | quote }}
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+          resources:
+            {{- toYaml .Values.orderWorker.resources | nindent 12 }}
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}

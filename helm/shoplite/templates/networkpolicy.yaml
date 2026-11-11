@@ -1,0 +1,99 @@
+{{- if .Values.networkPolicy.enabled }}
+# NetworkPolicy: Isolate PostgreSQL to catalog-api and order-worker only (Constraint C2)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "shoplite.fullname" . }}-postgres-netpol
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "shoplite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "shoplite.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: catalog-api
+        - podSelector:
+            matchLabels:
+              {{- include "shoplite.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: order-worker
+      ports:
+        - protocol: TCP
+          port: {{ .Values.postgresql.service.port }}
+---
+# NetworkPolicy: Isolate Redis to catalog-api and order-worker only (Constraint C2)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "shoplite.fullname" . }}-redis-netpol
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: queue
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "shoplite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: queue
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "shoplite.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: catalog-api
+        - podSelector:
+            matchLabels:
+              {{- include "shoplite.selectorLabels" . | nindent 14 }}
+              app.kubernetes.io/component: order-worker
+      ports:
+        - protocol: TCP
+          port: {{ .Values.redis.service.port }}
+---
+# NetworkPolicy: Allow HTTP ingress to catalog-api
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "shoplite.fullname" . }}-catalog-api-netpol
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: catalog-api
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "shoplite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: catalog-api
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.catalogApi.service.targetPort }}
+---
+# NetworkPolicy: Allow HTTP ingress to web
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "shoplite.fullname" . }}-web-netpol
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "shoplite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.web.service.targetPort }}
+{{- end }}

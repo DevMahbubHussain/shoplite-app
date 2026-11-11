@@ -1,0 +1,197 @@
+global:
+  environment: prod
+  project: shoplite
+
+# PostgreSQL Database Configuration
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "15-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  auth:
+    database: shoplite
+    username: shoplite
+    password: "ShopLiteSecurePass2026!"
+  persistence:
+    enabled: true
+    size: 10Gi
+    accessModes:
+      - ReadWriteOnce
+    storageClass: ""
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+# Redis Queue Configuration
+redis:
+  enabled: true
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    port: 6379
+  resources:
+    limits:
+      cpu: 300m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+# Catalog API Service
+catalogApi:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: 263303066497.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-catalog-api
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  probes:
+    liveness:
+      path: /healthz
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      path: /readyz
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+  chaos:
+    chaosLatencyMs: 0
+    chaosErrorRate: 0.0
+
+# Order Worker Service (Headless Queue Consumer)
+orderWorker:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: 263303066497.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-order-worker
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  terminationGracePeriodSeconds: 30
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  chaos:
+    chaosSlowDbMs: 0
+    chaosMemoryLeakMb: 0
+
+# Web Frontend Service
+web:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: 263303066497.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-web
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+  resources:
+    limits:
+      cpu: 200m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+  probes:
+    liveness:
+      path: /healthz
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readiness:
+      path: /healthz
+      initialDelaySeconds: 3
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+# Ingress Configuration (Fronted by Ingress-Nginx controller and ALB)
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  hosts:
+    - host: ""
+      paths:
+        - path: /api(/|$)(.*)
+          pathType: ImplementationSpecific
+          service:
+            name: catalog-api
+            port: 8000
+        - path: /()(.*)
+          pathType: ImplementationSpecific
+          service:
+            name: web
+            port: 80
+
+# Horizontal Pod Autoscaling (for order-worker consumer)
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Kubernetes NetworkPolicy (Strict Zero-Trust Boundary)
+networkPolicy:
+  enabled: true

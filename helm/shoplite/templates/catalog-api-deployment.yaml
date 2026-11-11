@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "shoplite.fullname" . }}-catalog-api
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: catalog-api
+spec:
+  replicas: {{ .Values.catalogApi.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "shoplite.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: catalog-api
+  template:
+    metadata:
+      labels:
+        {{- include "shoplite.labels" . | nindent 8 }}
+        app.kubernetes.io/component: catalog-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: {{ .Values.catalogApi.securityContext.runAsNonRoot }}
+        runAsUser: {{ .Values.catalogApi.securityContext.runAsUser }}
+        fsGroup: {{ .Values.catalogApi.securityContext.runAsUser }}
+      containers:
+        - name: catalog-api
+          image: "{{ .Values.catalogApi.image.repository }}:{{ .Values.catalogApi.image.tag }}"
+          imagePullPolicy: {{ .Values.catalogApi.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: {{ .Values.catalogApi.securityContext.readOnlyRootFilesystem }}
+            allowPrivilegeEscalation: {{ .Values.catalogApi.securityContext.allowPrivilegeEscalation }}
+            capabilities:
+              {{- toYaml .Values.catalogApi.securityContext.capabilities | nindent 14 }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "shoplite.fullname" . }}-config
+            - secretRef:
+                name: {{ include "shoplite.fullname" . }}-secrets
+          env:
+            - name: CHAOS_LATENCY_MS
+              value: {{ .Values.catalogApi.chaos.chaosLatencyMs | quote }}
+            - name: CHAOS_ERROR_RATE
+              value: {{ .Values.catalogApi.chaos.chaosErrorRate | quote }}
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.catalogApi.probes.liveness.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.catalogApi.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.catalogApi.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.catalogApi.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.catalogApi.probes.liveness.failureThreshold }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.catalogApi.probes.readiness.path }}
+              port: 8000
+            initialDelaySeconds: {{ .Values.catalogApi.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.catalogApi.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.catalogApi.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.catalogApi.probes.readiness.failureThreshold }}
+          resources:
+            {{- toYaml .Values.catalogApi.resources | nindent 12 }}
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}

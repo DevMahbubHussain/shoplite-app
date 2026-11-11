@@ -1,0 +1,15 @@
+apiVersion: v2
+name: shoplite
+description: Unified Helm chart for ShopLite cloud-native e-commerce microservices
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - ecommerce
+  - microservices
+  - fastapi
+  - redis
+  - postgresql
+maintainers:
+  - name: ShopLite DevOps Team
+    email: devops@shoplite.local
