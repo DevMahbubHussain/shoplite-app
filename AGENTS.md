@@ -285,6 +285,56 @@ shoplite-app/
     └── RCA                     # Root Cause Analysis incident reports (RCA_REPORT.md)
 ```
 
+### C20. Incremental Feature Delivery — No Full-Feature Dumps
+Every feature MUST be built **phase-by-phase** in small, verifiable increments. Writing an entire feature end-to-end in a single shot is strictly forbidden:
+
+1. **One Sub-Phase at a Time:**
+   - Each feature is decomposed into ordered sub-phases (e.g. 2A.1, 2A.2, … 2A.6). The agent MUST complete and verify sub-phase N before beginning sub-phase N+1.
+   - Never write the next sub-phase's code until the current sub-phase's verification gate passes in the terminal.
+2. **Every Sub-Phase Has a Verification Gate:**
+   - No sub-phase is considered "done" until its specific verification command or probe executes successfully in the terminal (e.g. `terraform validate`, `helm lint`, `sshd -T | grep ...`, `pytest`, `curl`, or visual log inspection).
+   - Verification evidence must be observable in the terminal output before proceeding.
+3. **No Monolithic Code Drops:**
+   - If a feature has 5 sub-phases, it takes 5 separate coding-and-verification cycles, never 1. Dumping an entire feature's worth of files in a single response is strictly prohibited.
+   - Each sub-phase produces a focused, minimal set of files that can be independently reviewed and tested.
+4. **Commits Match Sub-Phases:**
+   - Each verified sub-phase produces exactly one conventional commit when the user explicitly authorizes it (enforced by C8).
+   - Commit messages must reference the specific sub-phase scope (e.g. `feat(linux): harden SSH daemon configuration`, `feat(terraform): add VPC network module`).
+5. **Fail-Fast & Debug-in-Place:**
+   - If a verification gate fails, the agent MUST debug and fix the current sub-phase before moving forward. Never skip a failing verification to "fix it later."
+
+### C21. Isolated Feature Branch Lifecycle — Build, Verify, Merge, Repeat
+Each feature group MUST be developed on its own dedicated feature branch, fully completed and verified in isolation, and only then merged back to `main` before starting the next feature group:
+
+1. **One Feature Branch at a Time:**
+   - Create a feature branch from `main` (e.g. `feature/linux-hardening`). Complete **all** sub-phases of that feature group on this branch.
+   - Never start a second feature branch until the current one is merged to `main`.
+2. **Full Verification Before Merge:**
+   - Before merging any feature branch to `main`, run the **complete** existing test suite (`make test`, `make smoke` where applicable, `terraform validate`, `helm lint`, `ansible-playbook --syntax-check`, etc.) to confirm zero regressions.
+   - The merge to `main` only happens on explicit user authorization (enforced by C8).
+3. **Clean Main Branch Guarantee:**
+   - `main` must always be in a deployable, passing state. Every merge into `main` is a verified checkpoint.
+   - After merge, the feature branch may be deleted to keep the branch list clean.
+4. **Sequential Feature Group Order:**
+   - Feature groups follow a strict sequence: Linux Hardening → Terraform IaC → Ansible → Helm → CI/CD → GitOps → Observability → Chaos/RCA → Bonus Tracks.
+   - Each group starts from a clean, updated `main` branch that includes all previously merged work.
+5. **Branch-Scoped Commits Only:**
+   - All commits on a feature branch must be scoped exclusively to that feature group's domain. Never mix Linux hardening commits with Terraform code on the same branch.
+
+### C22. Learning, AWS Architecture Alignment & Interview Knowledge Base
+To institutionalize engineering knowledge, after completing each sub-phase and full phase, the agent must document comprehensive architectural rationales and interview preparation in an isolated `learning/` directory:
+
+1. **Dedicated Knowledge Directory Structure:**
+   - Documentation must reside strictly under:
+     `learning/<repo-name>/<phase-name>/` (e.g. `learning/shoplite-app/phase-2-linux-hardening-aws-iac/`).
+   - The root `.gitignore` MUST include `learning/` to ensure learning notes never pollute production repository commits, PRs, or container images.
+2. **Mandatory Content per Sub-Phase:**
+   - **What:** Exact technical explanation of what was built or configured, files created, and verification gates satisfied.
+   - **Why (AWS & Cloud-Native Alignment):** Architectural justification aligned with AWS Well-Architected Framework (Security, Reliability, Operational Excellence, Cost Optimization, Performance Efficiency) and production standards.
+   - **Interview Questions & Deep Dives:** Real-world DevOps / SRE / Cloud Architect interview questions (conceptual, scenario-based, and failure-mode troubleshooting) with exhaustive model answers.
+3. **Phase-Level Synthesis:**
+   - Upon completing all sub-phases in a phase, produce a comprehensive phase review covering holistic architecture, threat models, disaster recovery, and executive-level architectural defense questions.
+
 ---
 
 ## 2. Environment & Commands Reference

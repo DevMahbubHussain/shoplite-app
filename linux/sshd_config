@@ -1,0 +1,37 @@
+# Hardened SSH Daemon Configuration for ShopLite Production Servers
+
+# Authentication
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+# Disable unused authentication methods
+ChallengeResponseAuthentication no
+KerberosAuthentication no
+GSSAPIAuthentication no
+UsePAM yes
+
+# Session hardening
+X11Forwarding no
+PrintMotd no
+AcceptEnv LANG LC_*
+
+# Connection limits
+MaxAuthTries 3
+MaxSessions 5
+LoginGraceTime 30
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Keep-alive to detect dead connections
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+# Restrict to SSH protocol 2
+Protocol 2
+
+# Use strong ciphers and MACs only
+Subsystem sftp /usr/lib/openssh/sftp-server

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run ShopLite PostgreSQL DB Backup Nightly at 02:00 UTC
+RefuseManualStart=no
+RefuseManualStop=no
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+Unit=shoplite-backup.service
+
+[Install]
+WantedBy=timers.target
