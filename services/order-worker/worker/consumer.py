@@ -1,12 +1,11 @@
 import asyncio
-import signal
 from typing import Any
 import redis.asyncio as redis
 
-from app.config import worker_settings
-from app.logging import logger
-from app.metrics import ORDER_QUEUE_DEPTH
-from app.processor import OrderProcessor
+from worker.config import worker_settings
+from worker.logging import logger
+from worker.metrics import ORDER_QUEUE_DEPTH
+from worker.processor import OrderProcessor, ProcessingResult
 
 
 class QueueConsumer:
@@ -19,6 +18,7 @@ class QueueConsumer:
         self.redis = redis_client
         self.is_running = True
         self.in_flight = False
+        self._stop_lock = asyncio.Lock()
 
     async def init_redis(self) -> None:
         if self.redis is None:
@@ -58,7 +58,6 @@ class QueueConsumer:
 
         while self.is_running:
             try:
-                # Update queue depth gauge
                 depth = await self.redis.llen(worker_settings.REDIS_PENDING_QUEUE)
                 ORDER_QUEUE_DEPTH.set(depth)
 
@@ -72,10 +71,7 @@ class QueueConsumer:
                 if payload:
                     self.in_flight = True
                     try:
-                        success = await self.processor.process_payload(payload)
-                        if success:
-                            # Remove atomically from processing queue once committed
-                            await self.redis.lrem(worker_settings.REDIS_PROCESSING_QUEUE, 1, payload)
+                        await self._handle_payload(payload)
                     finally:
                         self.in_flight = False
 
@@ -88,12 +84,28 @@ class QueueConsumer:
 
         logger.info("Worker consumer loop exited cleanly")
 
-    async def stop(self) -> None:
-        self.is_running = False
-        while self.in_flight:
-            logger.info("Waiting for in-flight order commit before shutdown...")
-            await asyncio.sleep(0.1)
+    async def _handle_payload(self, payload: str) -> None:
+        result = await self.processor.process_payload(payload)
 
-        if self.redis:
-            await self.redis.aclose()
-        logger.info("Worker stopped successfully")
+        if result is ProcessingResult.RETRY:
+            # LPUSH first so the payload is never lost, then deduplicate processing
+            await self.redis.lpush(worker_settings.REDIS_PENDING_QUEUE, payload)
+            await self.redis.lrem(worker_settings.REDIS_PROCESSING_QUEUE, 1, payload)
+            await asyncio.sleep(worker_settings.RETRY_DELAY_SECONDS)
+            logger.info("Transient failure: payload requeued for retry", extra={"result": "RETRY"})
+            return
+
+        await self.redis.lrem(worker_settings.REDIS_PROCESSING_QUEUE, 1, payload)
+
+    async def stop(self) -> None:
+        # Idempotent: signal handler and finalizer may both request shutdown
+        async with self._stop_lock:
+            self.is_running = False
+            while self.in_flight:
+                logger.info("Waiting for in-flight order commit before shutdown...")
+                await asyncio.sleep(0.1)
+
+            client, self.redis = self.redis, None
+            if client:
+                await client.aclose()
+            logger.info("Worker stopped successfully")

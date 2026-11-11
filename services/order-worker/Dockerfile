@@ -31,7 +31,7 @@ ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-COPY --chown=appuser:appuser app /app/app
+COPY --chown=appuser:appuser worker /app/worker
 
 USER 10001
 
@@ -40,4 +40,4 @@ EXPOSE 9102
 HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
   CMD curl -f http://localhost:9102/metrics || exit 1
 
-CMD ["python", "-m", "app.main"]
+CMD ["python", "-m", "worker.main"]
