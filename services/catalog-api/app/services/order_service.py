@@ -35,11 +35,24 @@ class OrderService:
         )
         saved_order = await self.order_repo.create(new_order)
 
-        await self.queue_service.push_order(
-            order_id=saved_order.id,
-            product_id=saved_order.product_id,
-            quantity=saved_order.quantity,
-        )
+        try:
+            await self.queue_service.push_order(
+                order_id=saved_order.id,
+                product_id=saved_order.product_id,
+                quantity=saved_order.quantity,
+            )
+        except Exception as exc:
+            # Persisted order must not linger as PENDING when enqueue failed
+            await self.order_repo.update_status(saved_order.id, OrderStatus.FAILED.value)
+            logger.error(
+                f"Failed to enqueue order {saved_order.id}; marked FAILED",
+                extra={"order_id": saved_order.id},
+                exc_info=exc,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Order could not be enqueued; please retry",
+            ) from exc
 
         ORDERS_CREATED_TOTAL.inc()
 

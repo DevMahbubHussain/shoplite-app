@@ -1,9 +1,8 @@
 from app.schemas.health import HealthResponse, ReadinessResponse
 from app.schemas.order import OrderCreate, OrderOut
-from app.schemas.product import ProductCreate, ProductOut
+from app.schemas.product import ProductOut
 
 __all__ = [
-    "ProductCreate",
     "ProductOut",
     "OrderCreate",
     "OrderOut",

@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from app.models.order import OrderStatus
 
@@ -18,3 +18,9 @@ class OrderOut(BaseModel):
     status: OrderStatus
     created_at: datetime
     updated_at: datetime
+    completed_at: datetime | None = None
+
+    @computed_field
+    @property
+    def order_id(self) -> int:
+        return self.id

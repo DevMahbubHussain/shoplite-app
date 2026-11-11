@@ -12,22 +12,20 @@ from app.observability.metrics import (
 class MetricsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         start_time = time.perf_counter()
-        response: Response | None = None
         status_code = 500
+        route_path = request.url.path
 
         try:
             response = await call_next(request)
             status_code = response.status_code
             return response
         finally:
-            duration = time.perf_counter() - start_time
-            route_path = request.url.path
-            for route in request.app.routes:
-                match, _ = route.matches(request.scope)
-                if match:
-                    route_path = getattr(route, "path", request.url.path)
-                    break
+            # Starlette stores the matched route in the scope during routing
+            route = request.scope.get("route")
+            if route is not None:
+                route_path = route.path
 
+            duration = time.perf_counter() - start_time
             HTTP_REQUESTS_TOTAL.labels(
                 method=request.method,
                 route=route_path,
