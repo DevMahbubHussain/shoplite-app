@@ -1,0 +1,123 @@
+---
+# ShopLite OS Hardening & Security Baseline Playbook
+# Enforces SSH lockdown, unprivileged users, log ACLs, and UFW firewall
+
+- name: Apply Linux Hardening and Security Baseline
+  hosts: k8s_cluster
+  become: true
+  gather_facts: true
+
+  vars:
+    log_dir: /var/log/shoplite
+    vpc_cidr: "10.0.0.0/16"
+
+  tasks:
+    - name: 1. Ensure operations group 'ops' exists
+      ansible.builtin.group:
+        name: ops
+        state: present
+
+    - name: 2. Ensure deployment user 'deploy' exists in 'ops' group
+      ansible.builtin.user:
+        name: deploy
+        group: ops
+        shell: /bin/bash
+        create_home: true
+        state: present
+
+    - name: 3. Deploy hardened sshd_config
+      ansible.builtin.copy:
+        src: ../../linux/sshd_config
+        dest: /etc/ssh/sshd_config
+        owner: root
+        group: root
+        mode: '0600'
+        validate: '/usr/sbin/sshd -t -f %s'
+      notify: Restart SSH Daemon
+
+    - name: 4. Ensure /var/log/shoplite directory exists with mode 750
+      ansible.builtin.file:
+        path: "{{ log_dir }}"
+        state: directory
+        owner: root
+        group: ops
+        mode: '0750'
+
+    - name: 5. Apply exactly one POSIX ACL rule (g:ops:r-X)
+      ansible.builtin.command:
+        cmd: "setfacl -R -m g:ops:r-X {{ log_dir }}"
+      changed_when: false
+
+    - name: 6. Install UFW and ACL tools
+      ansible.builtin.apt:
+        name:
+          - ufw
+          - acl
+        state: present
+        update_cache: true
+
+    - name: 7. Configure UFW default policies
+      community.general.ufw:
+        direction: "{{ item.direction }}"
+        policy: "{{ item.policy }}"
+      loop:
+        - { direction: 'incoming', policy: 'deny' }
+        - { direction: 'outgoing', policy: 'allow' }
+
+    - name: 8. Allow essential management and perimeter traffic in UFW
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port }}"
+        proto: "{{ item.proto }}"
+        comment: "{{ item.comment }}"
+      loop:
+        - { port: '22', proto: 'tcp', comment: 'SSH Administration' }
+        - { port: '80', proto: 'tcp', comment: 'HTTP Web Ingress' }
+        - { port: '443', proto: 'tcp', comment: 'HTTPS Web Ingress' }
+
+    - name: 9. Allow intra-cluster VPC traffic for Kubernetes overlay and services
+      community.general.ufw:
+        rule: allow
+        src: "{{ vpc_cidr }}"
+        comment: 'Intra-cluster VPC traffic for K8s API, CNI, and NodePorts'
+
+    - name: 10. Enable UFW firewall
+      community.general.ufw:
+        state: enabled
+
+    - name: 11. Deploy backup script to /usr/local/bin
+      ansible.builtin.copy:
+        src: ../../linux/systemd/shoplite-backup.sh
+        dest: /usr/local/bin/shoplite-backup.sh
+        owner: root
+        group: root
+        mode: '0750'
+
+    - name: 12. Deploy systemd backup service and timer units
+      ansible.builtin.copy:
+        src: "../../linux/systemd/{{ item }}"
+        dest: "/etc/systemd/system/{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - shoplite-backup.service
+        - shoplite-backup.timer
+      notify: Reload Systemd
+
+    - name: 13. Enable and start systemd backup timer
+      ansible.builtin.systemd:
+        name: shoplite-backup.timer
+        state: started
+        enabled: true
+        daemon_reload: true
+
+  handlers:
+    - name: Restart SSH Daemon
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
+
+    - name: Reload Systemd
+      ansible.builtin.systemd:
+        daemon_reload: true

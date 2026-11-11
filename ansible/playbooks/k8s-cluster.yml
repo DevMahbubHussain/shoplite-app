@@ -1,0 +1,142 @@
+---
+# ShopLite Kubernetes Cluster Bootstrap Playbook
+# Installs kubeadm/kubelet/kubectl, initializes control plane, deploys Calico CNI, and joins workers
+
+- name: 1. Install Kubernetes Core Packages across All Nodes
+  hosts: k8s_cluster
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Ensure /etc/apt/keyrings directory exists
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Kubernetes official repository GPG key
+      ansible.builtin.get_url:
+        url: "https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key"
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+        mode: '0644'
+        force: false
+
+    - name: Add Kubernetes official apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /"
+        state: present
+        filename: kubernetes
+
+    - name: Install kubelet, kubeadm, and kubectl
+      ansible.builtin.apt:
+        name:
+          - kubelet
+          - kubeadm
+          - kubectl
+        state: present
+        update_cache: true
+
+    - name: Mark kubelet, kubeadm, and kubectl on hold to prevent unintentional upgrades
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    - name: Ensure kubelet service is enabled
+      ansible.builtin.systemd:
+        name: kubelet
+        enabled: true
+        state: started
+
+
+- name: 2. Initialize Control Plane Node
+  hosts: control_plane
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Check if Kubernetes control plane is already initialized
+      ansible.builtin.stat:
+        path: /etc/kubernetes/admin.conf
+      register: kubeadm_init_check
+
+    - name: Initialize Kubernetes cluster with kubeadm
+      ansible.builtin.command: >
+        kubeadm init
+        --pod-network-cidr={{ pod_network_cidr }}
+        --apiserver-advertise-address={{ internal_ip }}
+        --node-name={{ inventory_hostname }}
+      when: not kubeadm_init_check.stat.exists
+      register: kubeadm_init_output
+
+    - name: Create /root/.kube directory
+      ansible.builtin.file:
+        path: /root/.kube
+        state: directory
+        mode: '0700'
+
+    - name: Copy admin.conf to root kubeconfig
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /root/.kube/config
+        remote_src: true
+        mode: '0600'
+
+    - name: Create /home/ubuntu/.kube directory
+      ansible.builtin.file:
+        path: /home/ubuntu/.kube
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0700'
+
+    - name: Copy admin.conf to ubuntu user kubeconfig
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/ubuntu/.kube/config
+        remote_src: true
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Deploy Calico CNI overlay network
+      ansible.builtin.command: >
+        kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf
+      when: not kubeadm_init_check.stat.exists
+
+    - name: Generate worker node join command
+      ansible.builtin.command: kubeadm token create --print-join-command
+      register: raw_join_command
+      changed_when: false
+
+    - name: Set join command as shared fact across play
+      ansible.builtin.set_fact:
+        k8s_join_command: "{{ raw_join_command.stdout }}"
+
+
+- name: 3. Join Worker Nodes to Cluster
+  hosts: workers
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Check if worker node has already joined
+      ansible.builtin.stat:
+        path: /etc/kubernetes/kubelet.conf
+      register: kubelet_conf_check
+
+    - name: Execute kubeadm join command on worker nodes
+      ansible.builtin.command: "{{ hostvars[groups['control_plane'][0]]['k8s_join_command'] }}"
+      when: not kubelet_conf_check.stat.exists
+      register: worker_join_result
+
+    - name: Ensure kubelet service is active on workers
+      ansible.builtin.systemd:
+        name: kubelet
+        state: started
+        enabled: true
