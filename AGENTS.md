@@ -312,9 +312,9 @@ Each feature group MUST be developed on its own dedicated feature branch, fully 
 2. **Full Verification Before Merge:**
    - Before merging any feature branch to `main`, run the **complete** existing test suite (`make test`, `make smoke` where applicable, `terraform validate`, `helm lint`, `ansible-playbook --syntax-check`, etc.) to confirm zero regressions.
    - The merge to `main` only happens on explicit user authorization (enforced by C8).
-3. **Clean Main Branch Guarantee:**
+3. **Clean Main Branch Guarantee & Permanent Feature Branch Retention:**
    - `main` must always be in a deployable, passing state. Every merge into `main` is a verified checkpoint.
-   - After merge, the feature branch may be deleted to keep the branch list clean.
+   - **Zero Branch Deletion Policy:** All completed feature branches MUST be preserved permanently after merging to `main`. Never delete any feature branch; each branch serves as permanent git history and audit verification across milestones.
 4. **Sequential Feature Group Order:**
    - Feature groups follow a strict sequence: Linux Hardening → Terraform IaC → Ansible → Helm → CI/CD → GitOps → Observability → Chaos/RCA → Bonus Tracks.
    - Each group starts from a clean, updated `main` branch that includes all previously merged work.
