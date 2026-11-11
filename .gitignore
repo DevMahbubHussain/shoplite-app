@@ -90,3 +90,6 @@ PRD/
 Thumbs.db
 .agents/
 skills-lock.json
+
+# Learning & Interview Documentation
+learning/
