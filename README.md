@@ -177,7 +177,70 @@ shoplite-gitops/
 
 ---
 
-## 7. Quick Start & Local Development
+## 7. Automated CI/CD & GitOps Delivery Pipeline
+
+The ShopLite delivery lifecycle enforces **The Golden Rule (Constraint C2)**: complete physical and architectural separation between Continuous Integration (CI) in `shoplite-app` and Continuous Delivery / GitOps (CD) in `shoplite-gitops`.
+
+### 7.1 Delivery Architecture & Handshake Sequence
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Dev as Developer
+    participant AppRepo as shoplite-app (GitHub)
+    participant CI as GitHub Actions
+    participant Trivy as Aqua Trivy Scanner
+    participant ECR as Amazon ECR (ap-southeast-1)
+    participant GitOpsRepo as shoplite-gitops (GitHub)
+    participant ArgoCD as ArgoCD Controller
+    participant K8s as Kubernetes Cluster
+
+    Dev->>AppRepo: git push origin main
+    AppRepo->>CI: Trigger Workflow (.github/workflows/ci.yaml)
+    critical 1. Quality & Contract Verification
+        CI->>CI: Run pytest test-catalog-api & test-order-worker
+        CI->>CI: Execute helm lint & template dry-run
+    end
+    critical 2. Container Security Gate
+        CI->>CI: Build multi-stage images (Buildx + GHA Cache)
+        CI->>Trivy: Scan images for HIGH/CRITICAL CVEs
+        Trivy-->>CI: 0 Blocking Vulnerabilities
+    end
+    critical 3. Cloud Artifact Publishing
+        CI->>ECR: Assume IAM Role via AWS OIDC (No Static Keys)
+        CI->>ECR: Push images (sha-commit, commit, latest)
+    end
+    critical 4. Cross-Repository GitOps Handshake
+        CI->>GitOpsRepo: Checkout shoplite-gitops repository
+        CI->>GitOpsRepo: Update envs/dev/values.yaml with new image tag
+        CI->>GitOpsRepo: git commit -m "deploy(dev): promote..." [skip ci]
+        CI->>GitOpsRepo: git push origin main
+    end
+    critical 5. GitOps Reconciliation
+        GitOpsRepo->>ArgoCD: Detect Git Commit (Automated Sync)
+        ArgoCD->>K8s: Apply desired state (Rolling Update)
+        ArgoCD-->>K8s: Continuous Drift Detection & Self-Healing
+    end
+```
+
+### 7.2 Workflow Triggers & Execution Modes
+
+The workflow in [.github/workflows/ci.yaml](file:///.github/workflows/ci.yaml) supports three execution modes:
+1. **Push to `main`:** Runs full pipeline (Test $\to$ Scan $\to$ Publish $\to$ GitOps Promote).
+2. **Pull Request to `main`:** Runs validation gates only (Test $\to$ Scan). Publishing and GitOps promotion steps are skipped.
+3. **Manual Trigger (`workflow_dispatch`):** Allows triggering full pipeline runs from the GitHub UI Actions tab or via GitHub CLI:
+   ```bash
+   gh workflow run ci.yaml --ref main
+   ```
+
+### 7.3 Security Posture & Least Privilege
+- **Zero Static AWS Keys:** Uses GitHub Actions OpenID Connect (OIDC) identity provider with AWS IAM role assumption (`sts:AssumeRoleWithWebIdentity`).
+- **Zero Cluster-Admin CI Tokens:** CI runners possess zero Kubernetes credentials and execute zero `kubectl` or `helm upgrade` commands. All deployments are reconciled exclusively by ArgoCD from `shoplite-gitops`.
+- **Shift-Left Vulnerability Gate:** Multi-stage builds are scanned with Aqua Security Trivy, blocking deployment on any unpatched `CRITICAL` or `HIGH` vulnerabilities.
+
+---
+
+## 8. Quick Start & Local Development
 
 ### Prerequisites
 - Docker Engine 24+ and Docker Compose v2
@@ -214,7 +277,7 @@ make down
 
 ---
 
-## 8. Direct Inspection & Diagnostics
+## 9. Direct Inspection & Diagnostics
 
 ```bash
 # Check service liveness and readiness
@@ -235,7 +298,7 @@ docker compose exec redis redis-cli LLEN orders:processing
 
 ---
 
-## 9. Testing Strategy (3-Tier Testing Protocol)
+## 10. Testing Strategy (3-Tier Testing Protocol)
 
 Testing adheres to **Constraint C18** in [AGENTS.md](file:///E:/shoplite-app/AGENTS.md):
 
@@ -251,7 +314,7 @@ Testing adheres to **Constraint C18** in [AGENTS.md](file:///E:/shoplite-app/AGE
 
 ---
 
-## 10. Engineering Standards & Agent Instructions
+## 11. Engineering Standards & Agent Instructions
 
 This repository is governed by [AGENTS.md](file:///E:/shoplite-app/AGENTS.md), defining binding rules across all development phases:
 - **No Guessed Code (C1):** Official documentation verification required for all IaC, Kubernetes, and API APIs.
