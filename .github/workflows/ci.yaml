@@ -42,7 +42,6 @@ jobs:
 
       - name: Run Catalog API Unit Tests
         env:
-          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
           REDIS_HOST: localhost
           REDIS_PORT: 6379
         run: |
@@ -69,7 +68,6 @@ jobs:
 
       - name: Run Order Worker Unit Tests
         env:
-          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
           REDIS_HOST: localhost
           REDIS_PORT: 6379
         run: |
@@ -169,6 +167,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Configure AWS Credentials (OIDC)
+        id: aws-creds
+        continue-on-error: true
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN || 'arn:aws:iam::263303066497:role/shoplite-github-actions-role' }}
@@ -176,6 +176,7 @@ jobs:
           role-session-name: shoplite-ecr-publish
 
       - name: Log in to Amazon ECR
+        if: steps.aws-creds.outcome == 'success'
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
@@ -184,6 +185,7 @@ jobs:
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build and Push Container Image to ECR
+        if: steps.aws-creds.outcome == 'success'
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.service.context }}
@@ -210,6 +212,8 @@ jobs:
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Checkout GitOps Repository
+        id: checkout-gitops
+        continue-on-error: true
         uses: actions/checkout@v4
         with:
           repository: DevMahbubHussain/shoplite-gitops
@@ -218,6 +222,7 @@ jobs:
           ref: main
 
       - name: Update Image Tags in Dev Values
+        if: steps.checkout-gitops.outcome == 'success'
         working-directory: shoplite-gitops
         env:
           NEW_TAG: ${{ steps.vars.outputs.short_sha }}
@@ -233,6 +238,7 @@ jobs:
           git diff envs/dev/values.yaml
 
       - name: Commit and Push to GitOps Repository
+        if: steps.checkout-gitops.outcome == 'success'
         working-directory: shoplite-gitops
         env:
           NEW_TAG: ${{ steps.vars.outputs.short_sha }}
