@@ -1,0 +1,72 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: shoplite-alert-rules
+  namespace: monitoring
+  labels:
+    release: prometheus
+    app.kubernetes.io/name: shoplite
+    app.kubernetes.io/part-of: shoplite
+spec:
+  groups:
+    - name: shoplite-alerts
+      rules:
+        # Alert 1: HighErrorRate (Critical) - HTTP 5xx rate > 5% for 5m
+        - alert: HighErrorRate
+          expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.001)) * 100 > 5
+          for: 5m
+          labels:
+            severity: Critical
+            service: catalog-api
+          annotations:
+            summary: "API 5xx error rate is above 5%"
+            description: "Catalog API HTTP 5xx responses represent > 5% of total request volume for 5 consecutive minutes (current: {{ $value | printf \"%.2f\" }}%)."
+            runbook_url: "https://github.com/my-org/shoplite-app/blob/main/monitoring/runbooks/high-error-rate.md"
+
+        # Alert 2: HighLatency (Warning) - p95 latency > 1.0s for 5m
+        - alert: HighLatency
+          expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route)) > 1.0
+          for: 5m
+          labels:
+            severity: Warning
+            service: catalog-api
+          annotations:
+            summary: "p95 latency exceeded 1 second for 5 minutes"
+            description: "Route {{ $labels.route }} p95 response time is currently {{ $value | printf \"%.2f\" }}s, exceeding the 1.0s SLO threshold."
+            runbook_url: "https://github.com/my-org/shoplite-app/blob/main/monitoring/runbooks/high-latency.md"
+
+        # Alert 3: QueueBacklog (Warning) - order_queue_depth > 50 for 10m
+        - alert: QueueBacklog
+          expr: max(order_queue_depth) > 50
+          for: 10m
+          labels:
+            severity: Warning
+            service: order-worker
+          annotations:
+            summary: "Order queue depth exceeded 50 messages for 10m"
+            description: "Redis pending order queue has {{ $value }} unhandled messages for over 10 minutes, indicating consumer starvation or slow database writes."
+            runbook_url: "https://github.com/my-org/shoplite-app/blob/main/monitoring/runbooks/queue-backlog.md"
+
+        # Alert 4: PodCrashLooping (Critical) - container restarts increasing over 10m
+        - alert: PodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total{namespace="shoplite"}[10m]) * 600 > 2
+          for: 10m
+          labels:
+            severity: Critical
+            namespace: shoplite
+          annotations:
+            summary: "Pods crash looping in shoplite namespace"
+            description: "Pod {{ $labels.pod }} (container {{ $labels.container }}) has restarted > 2 times within 10 minutes."
+            runbook_url: "https://github.com/my-org/shoplite-app/blob/main/monitoring/runbooks/pod-crash-looping.md"
+
+        # Alert 5: NodeDiskFilling (Warning) - disk space usage > 85%
+        - alert: NodeDiskFilling
+          expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+          for: 5m
+          labels:
+            severity: Warning
+            tier: infrastructure
+          annotations:
+            summary: "Node disk space usage exceeded 85%"
+            description: "Root partition on node {{ $labels.instance }} has less than 15% available disk space remaining."
+            runbook_url: "https://github.com/my-org/shoplite-app/blob/main/monitoring/runbooks/node-disk-filling.md"
