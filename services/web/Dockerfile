@@ -12,7 +12,8 @@ RUN npm run build
 # Stage 2: Serve with unprivileged non-root Nginx
 FROM nginx:alpine AS runner
 
-RUN apk add --no-cache curl && \
+RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache curl && \
     addgroup -g 10001 -S appuser && \
     adduser -u 10001 -S appuser -G appuser && \
     mkdir -p /tmp/client_temp /tmp/proxy_temp_path /tmp/fastcgi_temp /tmp/uwsgi_temp /tmp/scgi_temp && \

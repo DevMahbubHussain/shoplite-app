@@ -22,7 +22,8 @@ FROM python:3.11-alpine AS runner
 
 WORKDIR /app
 
-RUN apk add --no-cache curl && \
+RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache curl && \
     addgroup -g 10001 -S appuser && \
     adduser -u 10001 -S appuser -G appuser
 
