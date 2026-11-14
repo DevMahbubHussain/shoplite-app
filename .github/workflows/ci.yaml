@@ -95,3 +95,46 @@ jobs:
         run: |
           helm template test-dev helm/shoplite -f helm/shoplite/values-dev.yaml > /dev/null
           helm template test-prod helm/shoplite -f helm/shoplite/values-prod.yaml > /dev/null
+
+  security-scan:
+    name: Build & Scan Container Images (Trivy)
+    needs:
+      - test-catalog-api
+      - test-order-worker
+      - lint-helm-chart
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: catalog-api
+            context: services/catalog-api
+          - name: order-worker
+            context: services/order-worker
+          - name: web
+            context: services/web
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Local Container Image for Scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          load: true
+          tags: shoplite-${{ matrix.service.name }}:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Aqua Security Trivy Vulnerability Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: shoplite-${{ matrix.service.name }}:scan
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
