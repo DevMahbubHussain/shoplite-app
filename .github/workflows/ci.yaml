@@ -138,3 +138,60 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+
+  build-and-push:
+    name: Build & Push Images to Amazon ECR
+    needs:
+      - security-scan
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: catalog-api
+            repo: shoplite-catalog-api
+            context: services/catalog-api
+          - name: order-worker
+            repo: shoplite-order-worker
+            context: services/order-worker
+          - name: web
+            repo: shoplite-web
+            context: services/web
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN || 'arn:aws:iam::263303066497:role/shoplite-github-actions-role' }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+          role-session-name: shoplite-ecr-publish
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Extract Short Git SHA
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Container Image to ECR
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service.repo }}:${{ steps.vars.outputs.short_sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service.repo }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ matrix.service.repo }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
