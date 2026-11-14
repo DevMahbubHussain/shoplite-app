@@ -1,0 +1,30 @@
+# Grafana Promtail Helm Values for ShopLite
+# Chart: grafana/promtail
+# Target Namespace: monitoring
+
+daemonset:
+  enabled: true
+
+config:
+  clients:
+    - url: http://loki.monitoring:3100/loki/api/v1/push
+
+  snippets:
+    pipelineStages:
+      - cri: {}
+      - json:
+          expressions:
+            trace_id: trace_id
+            level: level
+            service: service
+      - labels:
+          level:
+          service:
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
