@@ -195,3 +195,56 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  promote-gitops:
+    name: Promote Container Images to GitOps (Dev)
+    needs:
+      - build-and-push
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Application Repository
+        uses: actions/checkout@v4
+
+      - name: Extract Short Git SHA
+        id: vars
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          repository: DevMahbubHussain/shoplite-gitops
+          token: ${{ secrets.GITOPS_REPO_PAT || github.token }}
+          path: shoplite-gitops
+          ref: main
+
+      - name: Update Image Tags in Dev Values
+        working-directory: shoplite-gitops
+        env:
+          NEW_TAG: ${{ steps.vars.outputs.short_sha }}
+        run: |
+          echo "Updating ShopLite microservice tags to: ${NEW_TAG}"
+          if command -v yq >/dev/null 2>&1; then
+            yq eval ".catalogApi.image.tag = \"${NEW_TAG}\"" -i envs/dev/values.yaml
+            yq eval ".orderWorker.image.tag = \"${NEW_TAG}\"" -i envs/dev/values.yaml
+            yq eval ".web.image.tag = \"${NEW_TAG}\"" -i envs/dev/values.yaml
+          else
+            sed -i "s/tag: .*/tag: \"${NEW_TAG}\"/g" envs/dev/values.yaml
+          fi
+          git diff envs/dev/values.yaml
+
+      - name: Commit and Push to GitOps Repository
+        working-directory: shoplite-gitops
+        env:
+          NEW_TAG: ${{ steps.vars.outputs.short_sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add envs/dev/values.yaml
+          if git diff --staged --quiet; then
+            echo "No changes in values.yaml, skipping commit."
+          else
+            git commit -m "deploy(dev): promote container images to ${NEW_TAG} [skip ci]"
+            git push origin main
+          fi
+
+
