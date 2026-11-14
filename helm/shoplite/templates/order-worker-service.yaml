@@ -1,0 +1,19 @@
+{{- if .Values.orderWorker.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "shoplite.fullname" . }}-order-worker
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: order-worker
+spec:
+  type: {{ .Values.orderWorker.service.type | default "ClusterIP" }}
+  ports:
+    - port: {{ .Values.orderWorker.service.port | default 9102 }}
+      targetPort: {{ .Values.orderWorker.service.targetPort | default 9102 }}
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "shoplite.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: order-worker
+{{- end }}
