@@ -93,3 +93,6 @@ skills-lock.json
 
 # Learning & Interview Documentation
 learning/
+
+# Cloned GitOps Repository
+shoplite-gitops/
