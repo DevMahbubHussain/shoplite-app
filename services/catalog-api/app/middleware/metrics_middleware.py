@@ -1,4 +1,5 @@
 import time
+from opentelemetry import trace
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -32,7 +33,19 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                 status=str(status_code),
             ).inc()
 
-            HTTP_REQUEST_DURATION_SECONDS.labels(
-                method=request.method,
-                route=route_path,
-            ).observe(duration)
+            span = trace.get_current_span()
+            span_ctx = span.get_span_context() if span else None
+            exemplar = None
+            if span_ctx and span_ctx.is_valid:
+                exemplar = {"TraceID": trace.format_trace_id(span_ctx.trace_id)}
+
+            if exemplar:
+                HTTP_REQUEST_DURATION_SECONDS.labels(
+                    method=request.method,
+                    route=route_path,
+                ).observe(duration, exemplar=exemplar)
+            else:
+                HTTP_REQUEST_DURATION_SECONDS.labels(
+                    method=request.method,
+                    route=route_path,
+                ).observe(duration)

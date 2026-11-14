@@ -248,3 +248,21 @@ async def test_consumer_loop_single_order_lifecycle():
         assert len(mock_redis.pending) == 0
         assert mock_update.await_count == 2
         assert mock_update.await_args_list[-1].args == (55, "COMPLETED")
+
+
+@pytest.mark.asyncio
+async def test_order_processor_with_traceparent():
+    processor = OrderProcessor()
+    payload = json.dumps({
+        "order_id": 99,
+        "traceparent": "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+    })
+    patches = zero_delay() + (
+        patch("worker.processor.update_order_status", new_callable=AsyncMock),
+    )
+    with patches[0], patches[1], patches[2] as mock_update:
+        mock_update.return_value = True
+        result = await processor.process_payload(payload)
+
+    assert result is ProcessingResult.SUCCESS
+    assert mock_update.await_count == 2
