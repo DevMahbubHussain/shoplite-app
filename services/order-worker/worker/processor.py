@@ -57,7 +57,7 @@ class OrderProcessor:
                 result = await self._fulfill_order(order_id)
             except Exception as exc:
                 # Transient infrastructure failure: payload is kept for retry
-                self._record_attempt(start_time, result="failed")
+                self._record_attempt(start_time, result="failed", trace_id=trace_id_str)
                 logger.error(
                     f"Transient failure processing order {order_id}: {exc}",
                     extra={"order_id": order_id, "trace_id": trace_id_str},
@@ -65,7 +65,9 @@ class OrderProcessor:
                 )
                 return ProcessingResult.RETRY
 
-            self._record_attempt(start_time, result="success" if result else "failed")
+            self._record_attempt(
+                start_time, result="success" if result else "failed", trace_id=trace_id_str
+            )
             return ProcessingResult.SUCCESS if result else ProcessingResult.DISCARD
 
     async def _fulfill_order(self, order_id: int) -> bool:
@@ -110,6 +112,10 @@ class OrderProcessor:
             except Exception:
                 await asyncio.sleep(2.0)
 
-    def _record_attempt(self, start_time: float, result: str) -> None:
-        ORDER_PROCESSING_SECONDS.observe(time.perf_counter() - start_time)
+    def _record_attempt(self, start_time: float, result: str, trace_id: str = "") -> None:
+        duration = time.perf_counter() - start_time
+        if trace_id:
+            ORDER_PROCESSING_SECONDS.observe(duration, exemplar={"TraceID": trace_id})
+        else:
+            ORDER_PROCESSING_SECONDS.observe(duration)
         ORDERS_PROCESSED_TOTAL.labels(result=result).inc()

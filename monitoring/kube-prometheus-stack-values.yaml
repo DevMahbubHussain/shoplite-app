@@ -1,0 +1,155 @@
+# Kube-Prometheus-Stack Helm Values for ShopLite
+# Chart: prometheus-community/kube-prometheus-stack
+# Target Namespace: monitoring
+
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false
+    k8s: true
+    kubeApiserver: true
+    kubeApiserverAvailability: true
+    kubeApiserverSlos: false
+    kubelet: true
+    kubeProxy: false
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+
+# Core Prometheus Server Configuration
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelector:
+      matchLabels:
+        release: prometheus
+    serviceMonitorNamespaceSelector: {}
+    podMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelector: {}
+    podMonitorNamespaceSelector: {}
+    ruleSelectorNilUsesHelmValues: false
+    ruleSelector:
+      matchLabels:
+        release: prometheus
+    ruleNamespaceSelector: {}
+    enableFeatures:
+      - exemplar-storage
+    retention: 7d
+    retentionSize: 10Gi
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    storageSpec:
+      emptyDir: {}
+
+# Alertmanager Configuration
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    retention: 120h
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+    storage:
+      emptyDir: {}
+
+# Grafana Dashboard & DataSource Provisioning
+grafana:
+  enabled: true
+  adminPassword: "ShopLiteMonitoring2026!"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  # Dashboard Provisioning from ConfigMaps
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+      folderAnnotation: k8s-sidecar-target-directory
+      provider:
+        allowUiUpdates: true
+        foldersFromFilesStructure: true
+
+  # Pre-configured Data Sources with 3-Way Correlation
+  additionalDataSources:
+    # 1. Prometheus with Exemplar navigation to Tempo
+    - name: Prometheus
+      type: prometheus
+      uid: prometheus
+      access: proxy
+      url: http://shoplite-prom-kube-prometh-prometheus.monitoring:9090
+      isDefault: true
+      jsonData:
+        httpMethod: POST
+        timeInterval: 15s
+        exemplarTraceIdDestinations:
+          - name: TraceID
+            datasourceUid: tempo
+
+    # 2. Loki with Derived Fields linking trace_id directly to Tempo
+    - name: Loki
+      type: loki
+      uid: loki
+      access: proxy
+      url: http://loki.monitoring:3100
+      jsonData:
+        maxLines: 2000
+        derivedFields:
+          - name: TraceID
+            matcherRegex: '"trace_id":\s*"([a-f0-9]{32})"'
+            url: '$${__value.raw}'
+            datasourceUid: tempo
+            urlDisplayLabel: "View Distributed Trace in Tempo"
+
+    # 3. Tempo with trace-to-logs linking directly to Loki
+    - name: Tempo
+      type: tempo
+      uid: tempo
+      access: proxy
+      url: http://tempo.monitoring:3100
+      jsonData:
+        tracesToLogsV2:
+          datasourceUid: loki
+          spanStartTimeShift: "-2m"
+          spanEndTimeShift: "2m"
+          filterByTrace: false
+          filterBySpan: false
+          customQuery: true
+          query: '{$${__tags}} |= "$${__trace.id}"'
+          tags:
+            - key: service.name
+              value: service
+        serviceMap:
+          datasourceUid: prometheus
+        nodeGraph:
+          enabled: true
+        search:
+          hide: false
+        lokiSearch:
+          datasourceUid: loki

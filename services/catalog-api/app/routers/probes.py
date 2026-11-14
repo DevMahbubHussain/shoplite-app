@@ -1,5 +1,9 @@
-from fastapi import APIRouter, Depends, Response, status
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from fastapi import APIRouter, Depends, Request, Response, status
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
+from prometheus_client.openmetrics.exposition import (
+    CONTENT_TYPE_LATEST as OPENMETRICS_CONTENT_TYPE_LATEST,
+    generate_latest as openmetrics_generate_latest,
+)
 
 from app.database import check_database_connection
 from app.dependencies import get_queue_service
@@ -42,5 +46,11 @@ async def readiness_check(
 
 
 @router.get("/metrics")
-async def metrics() -> Response:
+async def metrics(request: Request) -> Response:
+    accept_header = request.headers.get("accept", "")
+    if "application/openmetrics-text" in accept_header:
+        return Response(
+            content=openmetrics_generate_latest(REGISTRY),
+            media_type=OPENMETRICS_CONTENT_TYPE_LATEST,
+        )
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
