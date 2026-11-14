@@ -211,18 +211,28 @@ jobs:
         id: vars
         run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Check for GitOps Promotion Secret
+        id: pat-check
+        run: |
+          if [ -n "${{ secrets.GITOPS_REPO_PAT }}" ]; then
+            echo "has_pat=true" >> $GITHUB_OUTPUT
+            echo "GITOPS_REPO_PAT is configured. Proceeding with GitOps promotion handshake."
+          else
+            echo "has_pat=false" >> $GITHUB_OUTPUT
+            echo "::notice title=GitOps PAT Notice::GITOPS_REPO_PAT secret is not configured in this repository. Add a Personal Access Token with repo scope under Repository Settings -> Secrets and variables -> Actions to enable automated cross-repository push."
+          fi
+
       - name: Checkout GitOps Repository
-        id: checkout-gitops
-        continue-on-error: true
+        if: steps.pat-check.outputs.has_pat == 'true'
         uses: actions/checkout@v4
         with:
           repository: DevMahbubHussain/shoplite-gitops
-          token: ${{ secrets.GITOPS_REPO_PAT || github.token }}
+          token: ${{ secrets.GITOPS_REPO_PAT }}
           path: shoplite-gitops
           ref: main
 
       - name: Update Image Tags in Dev Values
-        if: steps.checkout-gitops.outcome == 'success'
+        if: steps.pat-check.outputs.has_pat == 'true'
         working-directory: shoplite-gitops
         env:
           NEW_TAG: ${{ steps.vars.outputs.short_sha }}
@@ -238,7 +248,7 @@ jobs:
           git diff envs/dev/values.yaml
 
       - name: Commit and Push to GitOps Repository
-        if: steps.checkout-gitops.outcome == 'success'
+        if: steps.pat-check.outputs.has_pat == 'true'
         working-directory: shoplite-gitops
         env:
           NEW_TAG: ${{ steps.vars.outputs.short_sha }}
