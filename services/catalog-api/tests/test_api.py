@@ -169,6 +169,16 @@ async def test_metrics_endpoint(async_client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_metrics_endpoint_openmetrics_negotiation(async_client: AsyncClient):
+    await async_client.get("/products")
+    headers = {"Accept": "application/openmetrics-text; version=1.0.0; charset=utf-8"}
+    response = await async_client.get("/metrics", headers=headers)
+    assert response.status_code == 200
+    assert "application/openmetrics-text" in response.headers.get("content-type", "")
+    assert "# EOF" in response.text
+
+
+@pytest.mark.asyncio
 async def test_api_prefix_routing(async_client: AsyncClient):
     response = await async_client.get("/api/products")
     assert response.status_code == 200
