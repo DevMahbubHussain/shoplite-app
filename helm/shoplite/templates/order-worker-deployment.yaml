@@ -16,6 +16,10 @@ spec:
       labels:
         {{- include "shoplite.labels" . | nindent 8 }}
         app.kubernetes.io/component: order-worker
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9102"
+        prometheus.io/path: "/metrics"
     spec:
       terminationGracePeriodSeconds: {{ .Values.orderWorker.terminationGracePeriodSeconds | default 30 }}
       securityContext:
@@ -26,6 +30,10 @@ spec:
         - name: order-worker
           image: "{{ .Values.orderWorker.image.repository }}:{{ .Values.orderWorker.image.tag }}"
           imagePullPolicy: {{ .Values.orderWorker.image.pullPolicy }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.orderWorker.service.targetPort | default 9102 }}
+              protocol: TCP
           securityContext:
             readOnlyRootFilesystem: {{ .Values.orderWorker.securityContext.readOnlyRootFilesystem }}
             allowPrivilegeEscalation: {{ .Values.orderWorker.securityContext.allowPrivilegeEscalation }}

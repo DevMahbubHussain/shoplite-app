@@ -98,6 +98,10 @@ orderWorker:
     repository: 263303066497.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-order-worker
     tag: "latest"
     pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 9102
+    targetPort: 9102
   terminationGracePeriodSeconds: 30
   resources:
     limits:
@@ -179,6 +183,15 @@ ingress:
           service:
             name: web
             port: 80
+
+# Observability & Prometheus Scraping
+monitoring:
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    scrapeTimeout: 10s
+    labels:
+      release: prometheus
 
 # Horizontal Pod Autoscaling (for order-worker consumer)
 autoscaling:
