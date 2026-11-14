@@ -1,0 +1,60 @@
+# Grafana Tempo Helm Values for ShopLite
+# Chart: grafana/tempo
+# Target Namespace: monitoring
+
+tempo:
+  repository: grafana/tempo
+  tag: 2.4.1
+  pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+  retention: 48h
+
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: "0.0.0.0:4317"
+        http:
+          endpoint: "0.0.0.0:4318"
+    jaeger:
+      protocols:
+        thrift_http:
+          endpoint: "0.0.0.0:14268"
+
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+
+  searchEnabled: true
+
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: "http://shoplite-prom-kube-prometh-prometheus.monitoring:9090/api/v1/write"
+
+service:
+  type: ClusterIP
+  ports:
+    - name: tempo-prom-metrics
+      port: 3100
+      targetPort: 3100
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+
+persistence:
+  enabled: false
