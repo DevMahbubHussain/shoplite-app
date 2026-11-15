@@ -1,0 +1,13 @@
+{
+  "name": "shoplite-manual-testing-guideline",
+  "version": "1.0.0",
+  "description": "Step-by-Step Manual Verification and Testing Guide for ShopLite Cloud-Native Platform",
+  "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}
