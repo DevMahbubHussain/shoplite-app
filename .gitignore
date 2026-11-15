@@ -92,8 +92,8 @@ Thumbs.db
 .agents/
 skills-lock.json
 
-# Learning & Interview Documentation
-learning/
+# Testing Guidelines
+Guideline/
 
 # Cloned GitOps Repository
 shoplite-gitops/

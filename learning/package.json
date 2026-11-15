@@ -1,0 +1,13 @@
+{
+  "name": "shoplite-learning-knowledge-base",
+  "version": "1.0.0",
+  "description": "Comprehensive DevOps, Cloud Architecture, and SRE Interview Knowledge Base for ShopLite",
+  "scripts": {
+    "docs:dev": "vitepress dev docs --port 5174",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs --port 5174"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}
