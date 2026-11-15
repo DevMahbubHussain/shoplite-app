@@ -339,6 +339,31 @@ To institutionalize engineering knowledge, after completing each sub-phase and f
 
 ## 2. Environment & Commands Reference
 
+### Documentation & Developer Learning Portals (VitePress)
+
+ShopLite maintains two isolated, interactive VitePress portals on dedicated non-production branches:
+
+1. **Testing & Verification Guideline (`Guideline/`)**:
+   - **Branch**: `feature/documentation-guideline` (isolated, never merged to `main`).
+   - **Purpose**: Step-by-step CLI testing and evidence verification runbook covering all 8 modules and rubric checkpoints.
+   - **Offline Runbook**: `Guideline/MANUAL_TESTING_GUIDE.md`.
+   - **Start UI Portal**:
+     ```bash
+     cd Guideline
+     npm install
+     npm run docs:dev    # Runs interactive portal on http://localhost:5173
+     ```
+
+2. **Learning Hub & Interview Knowledge Base (`learning/`)**:
+   - **Branch**: `feature/learning-portal` (isolated, never merged to `main`).
+   - **Purpose**: Bilingual (English & বাংলা) DevOps, SRE, and Cloud Architecture deep dives with real-world interview Q&A.
+   - **Start UI Portal**:
+     ```bash
+     cd learning
+     npm install
+     npm run docs:dev    # Runs interactive portal on http://localhost:5174
+     ```
+
 ### Local Development & Verification (Docker Compose)
 ```bash
 # Build, start, and tear down full local stack
