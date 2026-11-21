@@ -1,0 +1,14 @@
+    ✗ GET /orders/{id} status is 200
+      ↳  76% — ✓ 1102 / ✗ 334
+    shoplite_error_rate...................: 25.30% 1825 out of 7212
+    shoplite_order_creation_duration_ms...: avg=993.006186 min=1        med=843.5    max=8390   p(90)=2116.1 p(95)=2807.2
+    shoplite_orders_created...............: 1436   2.393068/s
+    http_req_duration.....................: avg=597.47ms   min=0s       med=404.05ms max=8.39s  p(90)=1.38s  p(95)=1.91s 
+    http_req_failed.......................: 25.16% 3503 out of 13920
+    http_reqs.............................: 13920  23.197432/s
+    iterations............................: 5272   8.785694/s
+    vus...................................: 1      min=1             max=25
+    vus_max...............................: 25     min=25            max=25
+running (10m00.1s), 00/25 VUs, 5272 complete and 0 interrupted iterations
+default ✓ [ 100% ] 00/25 VUs  10m0s
+time="2026-11-21T16:44:36+06:00" level=error msg="thresholds on metrics 'http_req_duration, http_req_failed' have been crossed"
