@@ -36,7 +36,13 @@ singleBinary:
       cpu: 500m
       memory: 1Gi
   persistence:
-    enabled: false
+    enabled: true
+    size: 1Gi
+
+chunksCache:
+  enabled: false
+resultsCache:
+  enabled: false
 
 backend:
   replicas: 0

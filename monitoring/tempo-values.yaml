@@ -39,9 +39,16 @@ tempo:
 
   searchEnabled: true
 
+  extraVolumes:
+    - name: tempo-storage
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: tempo-storage
+      mountPath: /var/tempo
+
   metricsGenerator:
     enabled: true
-    remoteWriteUrl: "http://shoplite-prom-kube-prometh-prometheus.monitoring:9090/api/v1/write"
+    remoteWriteUrl: "http://prometheus-kube-prometheus-prometheus.monitoring:9090/api/v1/write"
 
 service:
   type: ClusterIP

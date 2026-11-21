@@ -44,7 +44,7 @@ prometheus:
     enableFeatures:
       - exemplar-storage
     retention: 7d
-    retentionSize: 10Gi
+    retentionSize: 10GiB
     scrapeInterval: 15s
     evaluationInterval: 15s
     resources:
@@ -103,8 +103,7 @@ grafana:
       type: prometheus
       uid: prometheus
       access: proxy
-      url: http://shoplite-prom-kube-prometh-prometheus.monitoring:9090
-      isDefault: true
+      url: http://prometheus-kube-prometheus-prometheus.monitoring:9090
       jsonData:
         httpMethod: POST
         timeInterval: 15s
