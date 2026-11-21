@@ -1,0 +1,1336 @@
+module.compute.data.aws_ami.ubuntu: Reading...
+module.compute.data.aws_ami.ubuntu: Read complete after 1s [id=ami-01c3c1b8604262d29]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  + create
+
+Terraform will perform the following actions:
+
+  # aws_budgets_budget.shoplite_budget will be created
+  + resource "aws_budgets_budget" "shoplite_budget" {
+      + account_id        = (known after apply)
+      + arn               = (known after apply)
+      + budget_type       = "COST"
+      + id                = (known after apply)
+      + limit_amount      = "20.0"
+      + limit_unit        = "USD"
+      + name              = "shoplite-prod-cost-guard"
+      + name_prefix       = (known after apply)
+      + tags_all          = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + time_period_end   = "2087-06-15_00:00"
+      + time_period_start = "2026-01-01_00:00"
+      + time_unit         = "MONTHLY"
+
+      + cost_filter (known after apply)
+
+      + cost_types (known after apply)
+
+      + notification {
+          + comparison_operator        = "GREATER_THAN"
+          + notification_type          = "ACTUAL"
+          + subscriber_email_addresses = [
+              + "sre-alerts@shoplite.internal",
+            ]
+          + subscriber_sns_topic_arns  = []
+          + threshold                  = 80
+          + threshold_type             = "PERCENTAGE"
+        }
+      + notification {
+          + comparison_operator        = "GREATER_THAN"
+          + notification_type          = "FORECASTED"
+          + subscriber_email_addresses = [
+              + "sre-alerts@shoplite.internal",
+            ]
+          + subscriber_sns_topic_arns  = []
+          + threshold                  = 100
+          + threshold_type             = "PERCENTAGE"
+        }
+    }
+
+  # module.alb.aws_lb.main will be created
+  + resource "aws_lb" "main" {
+      + arn                                                          = (known after apply)
+      + arn_suffix                                                   = (known after apply)
+      + client_keep_alive                                            = 3600
+      + desync_mitigation_mode                                       = "defensive"
+      + dns_name                                                     = (known after apply)
+      + drop_invalid_header_fields                                   = false
+      + enable_deletion_protection                                   = false
+      + enable_http2                                                 = true
+      + enable_tls_version_and_cipher_suite_headers                  = false
+      + enable_waf_fail_open                                         = false
+      + enable_xff_client_port                                       = false
+      + enable_zonal_shift                                           = false
+      + enforce_security_group_inbound_rules_on_private_link_traffic = (known after apply)
+      + id                                                           = (known after apply)
+      + idle_timeout                                                 = 60
+      + internal                                                     = false
+      + ip_address_type                                              = (known after apply)
+      + load_balancer_type                                           = "application"
+      + name                                                         = "shoplite-prod-alb"
+      + name_prefix                                                  = (known after apply)
+      + preserve_host_header                                         = false
+      + security_groups                                              = (known after apply)
+      + subnets                                                      = (known after apply)
+      + tags                                                         = {
+          + "Name" = "shoplite-prod-alb"
+        }
+      + tags_all                                                     = {
+          + "Name"        = "shoplite-prod-alb"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc_id                                                       = (known after apply)
+      + xff_header_processing_mode                                   = "append"
+      + zone_id                                                      = (known after apply)
+
+      + subnet_mapping (known after apply)
+    }
+
+  # module.alb.aws_lb_listener.http will be created
+  + resource "aws_lb_listener" "http" {
+      + arn                                                                   = (known after apply)
+      + id                                                                    = (known after apply)
+      + load_balancer_arn                                                     = (known after apply)
+      + port                                                                  = 80
+      + protocol                                                              = "HTTP"
+      + routing_http_request_x_amzn_mtls_clientcert_header_name               = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_issuer_header_name        = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_leaf_header_name          = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_serial_number_header_name = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_subject_header_name       = (known after apply)
+      + routing_http_request_x_amzn_mtls_clientcert_validity_header_name      = (known after apply)
+      + routing_http_request_x_amzn_tls_cipher_suite_header_name              = (known after apply)
+      + routing_http_request_x_amzn_tls_version_header_name                   = (known after apply)
+      + routing_http_response_access_control_allow_credentials_header_value   = (known after apply)
+      + routing_http_response_access_control_allow_headers_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_methods_header_value       = (known after apply)
+      + routing_http_response_access_control_allow_origin_header_value        = (known after apply)
+      + routing_http_response_access_control_expose_headers_header_value      = (known after apply)
+      + routing_http_response_access_control_max_age_header_value             = (known after apply)
+      + routing_http_response_content_security_policy_header_value            = (known after apply)
+      + routing_http_response_server_enabled                                  = (known after apply)
+      + routing_http_response_strict_transport_security_header_value          = (known after apply)
+      + routing_http_response_x_content_type_options_header_value             = (known after apply)
+      + routing_http_response_x_frame_options_header_value                    = (known after apply)
+      + ssl_policy                                                            = (known after apply)
+      + tags_all                                                              = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + tcp_idle_timeout_seconds                                              = (known after apply)
+
+      + default_action {
+          + order            = (known after apply)
+          + target_group_arn = (known after apply)
+          + type             = "forward"
+        }
+
+      + mutual_authentication (known after apply)
+    }
+
+  # module.alb.aws_lb_target_group.http will be created
+  + resource "aws_lb_target_group" "http" {
+      + arn                                = (known after apply)
+      + arn_suffix                         = (known after apply)
+      + connection_termination             = (known after apply)
+      + deregistration_delay               = "300"
+      + id                                 = (known after apply)
+      + ip_address_type                    = (known after apply)
+      + lambda_multi_value_headers_enabled = false
+      + load_balancer_arns                 = (known after apply)
+      + load_balancing_algorithm_type      = (known after apply)
+      + load_balancing_anomaly_mitigation  = (known after apply)
+      + load_balancing_cross_zone_enabled  = (known after apply)
+      + name                               = "shoplite-prod-tg-http"
+      + name_prefix                        = (known after apply)
+      + port                               = 30080
+      + preserve_client_ip                 = (known after apply)
+      + protocol                           = "HTTP"
+      + protocol_version                   = (known after apply)
+      + proxy_protocol_v2                  = false
+      + slow_start                         = 0
+      + tags                               = {
+          + "Name" = "shoplite-prod-tg-http"
+        }
+      + tags_all                           = {
+          + "Name"        = "shoplite-prod-tg-http"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + target_type                        = "instance"
+      + vpc_id                             = (known after apply)
+
+      + health_check {
+          + enabled             = true
+          + healthy_threshold   = 3
+          + interval            = 15
+          + matcher             = "200"
+          + path                = "/healthz"
+          + port                = "traffic-port"
+          + protocol            = "HTTP"
+          + timeout             = 5
+          + unhealthy_threshold = 3
+        }
+
+      + stickiness (known after apply)
+
+      + target_failover (known after apply)
+
+      + target_group_health (known after apply)
+
+      + target_health_state (known after apply)
+    }
+
+  # module.alb.aws_lb_target_group_attachment.workers[0] will be created
+  + resource "aws_lb_target_group_attachment" "workers" {
+      + id               = (known after apply)
+      + port             = 30080
+      + target_group_arn = (known after apply)
+      + target_id        = (known after apply)
+    }
+
+  # module.alb.aws_lb_target_group_attachment.workers[1] will be created
+  + resource "aws_lb_target_group_attachment" "workers" {
+      + id               = (known after apply)
+      + port             = 30080
+      + target_group_arn = (known after apply)
+      + target_id        = (known after apply)
+    }
+
+  # module.alb.aws_security_group.alb will be created
+  + resource "aws_security_group" "alb" {
+      + arn                    = (known after apply)
+      + description            = "Security group for the public Application Load Balancer"
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "10.0.0.0/16",
+                ]
+              + description      = "Egress to Kubernetes worker NodePort range"
+              + from_port        = 30000
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 32767
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "HTTP public ingress"
+              + from_port        = 80
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 80
+            },
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "HTTPS public ingress"
+              + from_port        = 443
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 443
+            },
+        ]
+      + name                   = "shoplite-prod-alb-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "shoplite-prod-alb-sg"
+        }
+      + tags_all               = {
+          + "Name"        = "shoplite-prod-alb-sg"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.compute.aws_iam_instance_profile.node_profile will be created
+  + resource "aws_iam_instance_profile" "node_profile" {
+      + arn         = (known after apply)
+      + create_date = (known after apply)
+      + id          = (known after apply)
+      + name        = "shoplite-prod-node-profile"
+      + name_prefix = (known after apply)
+      + path        = "/"
+      + role        = "shoplite-prod-node-role"
+      + tags_all    = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + unique_id   = (known after apply)
+    }
+
+  # module.compute.aws_iam_role.node_role will be created
+  + resource "aws_iam_role" "node_role" {
+      + arn                   = (known after apply)
+      + assume_role_policy    = jsonencode(
+            {
+              + Statement = [
+                  + {
+                      + Action    = "sts:AssumeRole"
+                      + Effect    = "Allow"
+                      + Principal = {
+                          + Service = "ec2.amazonaws.com"
+                        }
+                    },
+                ]
+              + Version   = "2012-10-17"
+            }
+        )
+      + create_date           = (known after apply)
+      + force_detach_policies = false
+      + id                    = (known after apply)
+      + managed_policy_arns   = (known after apply)
+      + max_session_duration  = 3600
+      + name                  = "shoplite-prod-node-role"
+      + name_prefix           = (known after apply)
+      + path                  = "/"
+      + tags_all              = {
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + unique_id             = (known after apply)
+
+      + inline_policy (known after apply)
+    }
+
+  # module.compute.aws_iam_role_policy_attachment.ecr_policy will be created
+  + resource "aws_iam_role_policy_attachment" "ecr_policy" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+      + role       = "shoplite-prod-node-role"
+    }
+
+  # module.compute.aws_iam_role_policy_attachment.ssm_policy will be created
+  + resource "aws_iam_role_policy_attachment" "ssm_policy" {
+      + id         = (known after apply)
+      + policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      + role       = "shoplite-prod-node-role"
+    }
+
+  # module.compute.aws_instance.control_plane will be created
+  + resource "aws_instance" "control_plane" {
+      + ami                                  = "ami-01c3c1b8604262d29"
+      + arn                                  = (known after apply)
+      + associate_public_ip_address          = (known after apply)
+      + availability_zone                    = (known after apply)
+      + cpu_core_count                       = (known after apply)
+      + cpu_threads_per_core                 = (known after apply)
+      + disable_api_stop                     = (known after apply)
+      + disable_api_termination              = (known after apply)
+      + ebs_optimized                        = (known after apply)
+      + enable_primary_ipv6                  = (known after apply)
+      + get_password_data                    = false
+      + host_id                              = (known after apply)
+      + host_resource_group_arn              = (known after apply)
+      + iam_instance_profile                 = "shoplite-prod-node-profile"
+      + id                                   = (known after apply)
+      + instance_initiated_shutdown_behavior = (known after apply)
+      + instance_lifecycle                   = (known after apply)
+      + instance_state                       = (known after apply)
+      + instance_type                        = "t3.medium"
+      + ipv6_address_count                   = (known after apply)
+      + ipv6_addresses                       = (known after apply)
+      + key_name                             = (known after apply)
+      + monitoring                           = (known after apply)
+      + outpost_arn                          = (known after apply)
+      + password_data                        = (known after apply)
+      + placement_group                      = (known after apply)
+      + placement_partition_number           = (known after apply)
+      + primary_network_interface_id         = (known after apply)
+      + private_dns                          = (known after apply)
+      + private_ip                           = (known after apply)
+      + public_dns                           = (known after apply)
+      + public_ip                            = (known after apply)
+      + secondary_private_ips                = (known after apply)
+      + security_groups                      = (known after apply)
+      + source_dest_check                    = true
+      + spot_instance_request_id             = (known after apply)
+      + subnet_id                            = (known after apply)
+      + tags                                 = {
+          + "Name" = "shoplite-prod-control-plane"
+          + "Role" = "control-plane"
+        }
+      + tags_all                             = {
+          + "Name"        = "shoplite-prod-control-plane"
+          + "Role"        = "control-plane"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + tenancy                              = (known after apply)
+      + user_data                            = "c20cb21da734195d9d44bb012df3e2b0ab203b8c"
+      + user_data_base64                     = (known after apply)
+      + user_data_replace_on_change          = false
+      + vpc_security_group_ids               = (known after apply)
+
+      + capacity_reservation_specification (known after apply)
+
+      + cpu_options (known after apply)
+
+      + ebs_block_device (known after apply)
+
+      + enclave_options (known after apply)
+
+      + ephemeral_block_device (known after apply)
+
+      + instance_market_options (known after apply)
+
+      + maintenance_options (known after apply)
+
+      + metadata_options (known after apply)
+
+      + network_interface (known after apply)
+
+      + private_dns_name_options (known after apply)
+
+      + root_block_device {
+          + delete_on_termination = true
+          + device_name           = (known after apply)
+          + encrypted             = true
+          + iops                  = (known after apply)
+          + kms_key_id            = (known after apply)
+          + tags_all              = (known after apply)
+          + throughput            = (known after apply)
+          + volume_id             = (known after apply)
+          + volume_size           = 30
+          + volume_type           = "gp3"
+        }
+    }
+
+  # module.compute.aws_instance.workers[0] will be created
+  + resource "aws_instance" "workers" {
+      + ami                                  = "ami-01c3c1b8604262d29"
+      + arn                                  = (known after apply)
+      + associate_public_ip_address          = (known after apply)
+      + availability_zone                    = (known after apply)
+      + cpu_core_count                       = (known after apply)
+      + cpu_threads_per_core                 = (known after apply)
+      + disable_api_stop                     = (known after apply)
+      + disable_api_termination              = (known after apply)
+      + ebs_optimized                        = (known after apply)
+      + enable_primary_ipv6                  = (known after apply)
+      + get_password_data                    = false
+      + host_id                              = (known after apply)
+      + host_resource_group_arn              = (known after apply)
+      + iam_instance_profile                 = "shoplite-prod-node-profile"
+      + id                                   = (known after apply)
+      + instance_initiated_shutdown_behavior = (known after apply)
+      + instance_lifecycle                   = (known after apply)
+      + instance_state                       = (known after apply)
+      + instance_type                        = "t3.medium"
+      + ipv6_address_count                   = (known after apply)
+      + ipv6_addresses                       = (known after apply)
+      + key_name                             = (known after apply)
+      + monitoring                           = (known after apply)
+      + outpost_arn                          = (known after apply)
+      + password_data                        = (known after apply)
+      + placement_group                      = (known after apply)
+      + placement_partition_number           = (known after apply)
+      + primary_network_interface_id         = (known after apply)
+      + private_dns                          = (known after apply)
+      + private_ip                           = (known after apply)
+      + public_dns                           = (known after apply)
+      + public_ip                            = (known after apply)
+      + secondary_private_ips                = (known after apply)
+      + security_groups                      = (known after apply)
+      + source_dest_check                    = true
+      + spot_instance_request_id             = (known after apply)
+      + subnet_id                            = (known after apply)
+      + tags                                 = {
+          + "Name" = "shoplite-prod-worker-1"
+          + "Role" = "worker"
+        }
+      + tags_all                             = {
+          + "Name"        = "shoplite-prod-worker-1"
+          + "Role"        = "worker"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + tenancy                              = (known after apply)
+      + user_data                            = "45b4d4b44f4dfcbb9e2838f449a8a9f15b3578e4"
+      + user_data_base64                     = (known after apply)
+      + user_data_replace_on_change          = false
+      + vpc_security_group_ids               = (known after apply)
+
+      + capacity_reservation_specification (known after apply)
+
+      + cpu_options (known after apply)
+
+      + ebs_block_device (known after apply)
+
+      + enclave_options (known after apply)
+
+      + ephemeral_block_device (known after apply)
+
+      + instance_market_options (known after apply)
+
+      + maintenance_options (known after apply)
+
+      + metadata_options (known after apply)
+
+      + network_interface (known after apply)
+
+      + private_dns_name_options (known after apply)
+
+      + root_block_device {
+          + delete_on_termination = true
+          + device_name           = (known after apply)
+          + encrypted             = true
+          + iops                  = (known after apply)
+          + kms_key_id            = (known after apply)
+          + tags_all              = (known after apply)
+          + throughput            = (known after apply)
+          + volume_id             = (known after apply)
+          + volume_size           = 30
+          + volume_type           = "gp3"
+        }
+    }
+
+  # module.compute.aws_instance.workers[1] will be created
+  + resource "aws_instance" "workers" {
+      + ami                                  = "ami-01c3c1b8604262d29"
+      + arn                                  = (known after apply)
+      + associate_public_ip_address          = (known after apply)
+      + availability_zone                    = (known after apply)
+      + cpu_core_count                       = (known after apply)
+      + cpu_threads_per_core                 = (known after apply)
+      + disable_api_stop                     = (known after apply)
+      + disable_api_termination              = (known after apply)
+      + ebs_optimized                        = (known after apply)
+      + enable_primary_ipv6                  = (known after apply)
+      + get_password_data                    = false
+      + host_id                              = (known after apply)
+      + host_resource_group_arn              = (known after apply)
+      + iam_instance_profile                 = "shoplite-prod-node-profile"
+      + id                                   = (known after apply)
+      + instance_initiated_shutdown_behavior = (known after apply)
+      + instance_lifecycle                   = (known after apply)
+      + instance_state                       = (known after apply)
+      + instance_type                        = "t3.medium"
+      + ipv6_address_count                   = (known after apply)
+      + ipv6_addresses                       = (known after apply)
+      + key_name                             = (known after apply)
+      + monitoring                           = (known after apply)
+      + outpost_arn                          = (known after apply)
+      + password_data                        = (known after apply)
+      + placement_group                      = (known after apply)
+      + placement_partition_number           = (known after apply)
+      + primary_network_interface_id         = (known after apply)
+      + private_dns                          = (known after apply)
+      + private_ip                           = (known after apply)
+      + public_dns                           = (known after apply)
+      + public_ip                            = (known after apply)
+      + secondary_private_ips                = (known after apply)
+      + security_groups                      = (known after apply)
+      + source_dest_check                    = true
+      + spot_instance_request_id             = (known after apply)
+      + subnet_id                            = (known after apply)
+      + tags                                 = {
+          + "Name" = "shoplite-prod-worker-2"
+          + "Role" = "worker"
+        }
+      + tags_all                             = {
+          + "Name"        = "shoplite-prod-worker-2"
+          + "Role"        = "worker"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + tenancy                              = (known after apply)
+      + user_data                            = "f8e0bac4e3d4c0bf9d6911c67173fb58a03fa164"
+      + user_data_base64                     = (known after apply)
+      + user_data_replace_on_change          = false
+      + vpc_security_group_ids               = (known after apply)
+
+      + capacity_reservation_specification (known after apply)
+
+      + cpu_options (known after apply)
+
+      + ebs_block_device (known after apply)
+
+      + enclave_options (known after apply)
+
+      + ephemeral_block_device (known after apply)
+
+      + instance_market_options (known after apply)
+
+      + maintenance_options (known after apply)
+
+      + metadata_options (known after apply)
+
+      + network_interface (known after apply)
+
+      + private_dns_name_options (known after apply)
+
+      + root_block_device {
+          + delete_on_termination = true
+          + device_name           = (known after apply)
+          + encrypted             = true
+          + iops                  = (known after apply)
+          + kms_key_id            = (known after apply)
+          + tags_all              = (known after apply)
+          + throughput            = (known after apply)
+          + volume_id             = (known after apply)
+          + volume_size           = 30
+          + volume_type           = "gp3"
+        }
+    }
+
+  # module.compute.aws_security_group.control_plane will be created
+  + resource "aws_security_group" "control_plane" {
+      + arn                    = (known after apply)
+      + description            = "Security group for Kubernetes control plane instance"
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "Outbound egress via NAT Gateway"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = []
+              + description      = "CNI overlay traffic from workers"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 0
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Kubelet API from workers"
+              + from_port        = 10250
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 10250
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Kubernetes API server from workers"
+              + from_port        = 6443
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 6443
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Self CNI overlay traffic"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = true
+              + to_port          = 0
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "etcd server client API"
+              + from_port        = 2379
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = true
+              + to_port          = 2380
+            },
+        ]
+      + name                   = "shoplite-prod-control-plane-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "shoplite-prod-control-plane-sg"
+        }
+      + tags_all               = {
+          + "Name"        = "shoplite-prod-control-plane-sg"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.compute.aws_security_group.worker will be created
+  + resource "aws_security_group" "worker" {
+      + arn                    = (known after apply)
+      + description            = "Security group for Kubernetes worker nodes"
+      + egress                 = [
+          + {
+              + cidr_blocks      = [
+                  + "0.0.0.0/0",
+                ]
+              + description      = "Outbound egress via NAT Gateway"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = false
+              + to_port          = 0
+            },
+        ]
+      + id                     = (known after apply)
+      + ingress                = [
+          + {
+              + cidr_blocks      = []
+              + description      = "Intra-worker CNI overlay traffic"
+              + from_port        = 0
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "-1"
+              + security_groups  = []
+              + self             = true
+              + to_port          = 0
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "Kubelet API intra-worker and control plane"
+              + from_port        = 10250
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = []
+              + self             = true
+              + to_port          = 10250
+            },
+          + {
+              + cidr_blocks      = []
+              + description      = "NodePort traffic from ALB"
+              + from_port        = 30000
+              + ipv6_cidr_blocks = []
+              + prefix_list_ids  = []
+              + protocol         = "tcp"
+              + security_groups  = (known after apply)
+              + self             = false
+              + to_port          = 32767
+            },
+        ]
+      + name                   = "shoplite-prod-worker-sg"
+      + name_prefix            = (known after apply)
+      + owner_id               = (known after apply)
+      + revoke_rules_on_delete = false
+      + tags                   = {
+          + "Name" = "shoplite-prod-worker-sg"
+        }
+      + tags_all               = {
+          + "Name"        = "shoplite-prod-worker-sg"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc_id                 = (known after apply)
+    }
+
+  # module.compute.aws_security_group_rule.control_plane_to_kubelet will be created
+  + resource "aws_security_group_rule" "control_plane_to_kubelet" {
+      + description              = "Kubelet API from control plane"
+      + from_port                = 10250
+      + id                       = (known after apply)
+      + protocol                 = "tcp"
+      + security_group_id        = (known after apply)
+      + security_group_rule_id   = (known after apply)
+      + self                     = false
+      + source_security_group_id = (known after apply)
+      + to_port                  = 10250
+      + type                     = "ingress"
+    }
+
+  # module.ecr.aws_ecr_lifecycle_policy.retention[0] will be created
+  + resource "aws_ecr_lifecycle_policy" "retention" {
+      + id          = (known after apply)
+      + policy      = jsonencode(
+            {
+              + rules = [
+                  + {
+                      + action       = {
+                          + type = "expire"
+                        }
+                      + description  = "Expire untagged images older than 14 days"
+                      + rulePriority = 1
+                      + selection    = {
+                          + countNumber = 14
+                          + countType   = "sinceImagePushed"
+                          + countUnit   = "days"
+                          + tagStatus   = "untagged"
+                        }
+                    },
+                  + {
+                      + action       = {
+                          + type = "expire"
+                        }
+                      + description  = "Retain only the last 10 tagged images"
+                      + rulePriority = 2
+                      + selection    = {
+                          + countNumber   = 10
+                          + countType     = "imageCountMoreThan"
+                          + tagPrefixList = [
+                              + "v",
+                              + "sha",
+                              + "release",
+                              + "build",
+                            ]
+                          + tagStatus     = "tagged"
+                        }
+                    },
+                ]
+            }
+        )
+      + registry_id = (known after apply)
+      + repository  = "shoplite-web"
+    }
+
+  # module.ecr.aws_ecr_lifecycle_policy.retention[1] will be created
+  + resource "aws_ecr_lifecycle_policy" "retention" {
+      + id          = (known after apply)
+      + policy      = jsonencode(
+            {
+              + rules = [
+                  + {
+                      + action       = {
+                          + type = "expire"
+                        }
+                      + description  = "Expire untagged images older than 14 days"
+                      + rulePriority = 1
+                      + selection    = {
+                          + countNumber = 14
+                          + countType   = "sinceImagePushed"
+                          + countUnit   = "days"
+                          + tagStatus   = "untagged"
+                        }
+                    },
+                  + {
+                      + action       = {
+                          + type = "expire"
+                        }
+                      + description  = "Retain only the last 10 tagged images"
+                      + rulePriority = 2
+                      + selection    = {
+                          + countNumber   = 10
+                          + countType     = "imageCountMoreThan"
+                          + tagPrefixList = [
+                              + "v",
+                              + "sha",
+                              + "release",
+                              + "build",
+                            ]
+                          + tagStatus     = "tagged"
+                        }
+                    },
+                ]
+            }
+        )
+      + registry_id = (known after apply)
+      + repository  = "shoplite-catalog-api"
+    }
+
+  # module.ecr.aws_ecr_lifecycle_policy.retention[2] will be created
+  + resource "aws_ecr_lifecycle_policy" "retention" {
+      + id          = (known after apply)
+      + policy      = jsonencode(
+            {
+              + rules = [
+                  + {
+                      + action       = {
+                          + type = "expire"
+                        }
+                      + description  = "Expire untagged images older than 14 days"
+                      + rulePriority = 1
+                      + selection    = {
+                          + countNumber = 14
+                          + countType   = "sinceImagePushed"
+                          + countUnit   = "days"
+                          + tagStatus   = "untagged"
+                        }
+                    },
+                  + {
+                      + action       = {
+                          + type = "expire"
+                        }
+                      + description  = "Retain only the last 10 tagged images"
+                      + rulePriority = 2
+                      + selection    = {
+                          + countNumber   = 10
+                          + countType     = "imageCountMoreThan"
+                          + tagPrefixList = [
+                              + "v",
+                              + "sha",
+                              + "release",
+                              + "build",
+                            ]
+                          + tagStatus     = "tagged"
+                        }
+                    },
+                ]
+            }
+        )
+      + registry_id = (known after apply)
+      + repository  = "shoplite-order-worker"
+    }
+
+  # module.ecr.aws_ecr_repository.repos[0] will be created
+  + resource "aws_ecr_repository" "repos" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "shoplite-web"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Name" = "shoplite-web"
+        }
+      + tags_all             = {
+          + "Name"        = "shoplite-web"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+
+      + encryption_configuration {
+          + encryption_type = "AES256"
+          + kms_key         = (known after apply)
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # module.ecr.aws_ecr_repository.repos[1] will be created
+  + resource "aws_ecr_repository" "repos" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "shoplite-catalog-api"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Name" = "shoplite-catalog-api"
+        }
+      + tags_all             = {
+          + "Name"        = "shoplite-catalog-api"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+
+      + encryption_configuration {
+          + encryption_type = "AES256"
+          + kms_key         = (known after apply)
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # module.ecr.aws_ecr_repository.repos[2] will be created
+  + resource "aws_ecr_repository" "repos" {
+      + arn                  = (known after apply)
+      + id                   = (known after apply)
+      + image_tag_mutability = "MUTABLE"
+      + name                 = "shoplite-order-worker"
+      + registry_id          = (known after apply)
+      + repository_url       = (known after apply)
+      + tags                 = {
+          + "Name" = "shoplite-order-worker"
+        }
+      + tags_all             = {
+          + "Name"        = "shoplite-order-worker"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+
+      + encryption_configuration {
+          + encryption_type = "AES256"
+          + kms_key         = (known after apply)
+        }
+
+      + image_scanning_configuration {
+          + scan_on_push = true
+        }
+    }
+
+  # module.network.aws_eip.nat will be created
+  + resource "aws_eip" "nat" {
+      + allocation_id        = (known after apply)
+      + arn                  = (known after apply)
+      + association_id       = (known after apply)
+      + carrier_ip           = (known after apply)
+      + customer_owned_ip    = (known after apply)
+      + domain               = "vpc"
+      + id                   = (known after apply)
+      + instance             = (known after apply)
+      + ipam_pool_id         = (known after apply)
+      + network_border_group = (known after apply)
+      + network_interface    = (known after apply)
+      + private_dns          = (known after apply)
+      + private_ip           = (known after apply)
+      + ptr_record           = (known after apply)
+      + public_dns           = (known after apply)
+      + public_ip            = (known after apply)
+      + public_ipv4_pool     = (known after apply)
+      + tags                 = {
+          + "Name" = "shoplite-prod-nat-eip"
+        }
+      + tags_all             = {
+          + "Name"        = "shoplite-prod-nat-eip"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc                  = (known after apply)
+    }
+
+  # module.network.aws_internet_gateway.igw will be created
+  + resource "aws_internet_gateway" "igw" {
+      + arn      = (known after apply)
+      + id       = (known after apply)
+      + owner_id = (known after apply)
+      + tags     = {
+          + "Name" = "shoplite-prod-igw"
+        }
+      + tags_all = {
+          + "Name"        = "shoplite-prod-igw"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc_id   = (known after apply)
+    }
+
+  # module.network.aws_nat_gateway.nat will be created
+  + resource "aws_nat_gateway" "nat" {
+      + allocation_id                      = (known after apply)
+      + association_id                     = (known after apply)
+      + connectivity_type                  = "public"
+      + id                                 = (known after apply)
+      + network_interface_id               = (known after apply)
+      + private_ip                         = (known after apply)
+      + public_ip                          = (known after apply)
+      + secondary_private_ip_address_count = (known after apply)
+      + secondary_private_ip_addresses     = (known after apply)
+      + subnet_id                          = (known after apply)
+      + tags                               = {
+          + "Name" = "shoplite-prod-nat-gw"
+        }
+      + tags_all                           = {
+          + "Name"        = "shoplite-prod-nat-gw"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+    }
+
+  # module.network.aws_route_table.private will be created
+  + resource "aws_route_table" "private" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + nat_gateway_id             = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags             = {
+          + "Name" = "shoplite-prod-private-rt"
+        }
+      + tags_all         = {
+          + "Name"        = "shoplite-prod-private-rt"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # module.network.aws_route_table.public will be created
+  + resource "aws_route_table" "public" {
+      + arn              = (known after apply)
+      + id               = (known after apply)
+      + owner_id         = (known after apply)
+      + propagating_vgws = (known after apply)
+      + route            = [
+          + {
+              + cidr_block                 = "0.0.0.0/0"
+              + gateway_id                 = (known after apply)
+                # (11 unchanged attributes hidden)
+            },
+        ]
+      + tags             = {
+          + "Name" = "shoplite-prod-public-rt"
+        }
+      + tags_all         = {
+          + "Name"        = "shoplite-prod-public-rt"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+      + vpc_id           = (known after apply)
+    }
+
+  # module.network.aws_route_table_association.private[0] will be created
+  + resource "aws_route_table_association" "private" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.network.aws_route_table_association.private[1] will be created
+  + resource "aws_route_table_association" "private" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.network.aws_route_table_association.public[0] will be created
+  + resource "aws_route_table_association" "public" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.network.aws_route_table_association.public[1] will be created
+  + resource "aws_route_table_association" "public" {
+      + id             = (known after apply)
+      + route_table_id = (known after apply)
+      + subnet_id      = (known after apply)
+    }
+
+  # module.network.aws_subnet.private[0] will be created
+  + resource "aws_subnet" "private" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-southeast-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.10.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name"                            = "shoplite-prod-private-subnet-1"
+          + "kubernetes.io/role/internal-elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Name"                            = "shoplite-prod-private-subnet-1"
+          + "environment"                     = "prod"
+          + "kubernetes.io/role/internal-elb" = "1"
+          + "managed_by"                      = "terraform"
+          + "project"                         = "shoplite"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.network.aws_subnet.private[1] will be created
+  + resource "aws_subnet" "private" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-southeast-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.20.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = false
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name"                            = "shoplite-prod-private-subnet-2"
+          + "kubernetes.io/role/internal-elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Name"                            = "shoplite-prod-private-subnet-2"
+          + "environment"                     = "prod"
+          + "kubernetes.io/role/internal-elb" = "1"
+          + "managed_by"                      = "terraform"
+          + "project"                         = "shoplite"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.network.aws_subnet.public[0] will be created
+  + resource "aws_subnet" "public" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-southeast-1a"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.1.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name"                   = "shoplite-prod-public-subnet-1"
+          + "kubernetes.io/role/elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Name"                   = "shoplite-prod-public-subnet-1"
+          + "environment"            = "prod"
+          + "kubernetes.io/role/elb" = "1"
+          + "managed_by"             = "terraform"
+          + "project"                = "shoplite"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.network.aws_subnet.public[1] will be created
+  + resource "aws_subnet" "public" {
+      + arn                                            = (known after apply)
+      + assign_ipv6_address_on_creation                = false
+      + availability_zone                              = "ap-southeast-1b"
+      + availability_zone_id                           = (known after apply)
+      + cidr_block                                     = "10.0.2.0/24"
+      + enable_dns64                                   = false
+      + enable_resource_name_dns_a_record_on_launch    = false
+      + enable_resource_name_dns_aaaa_record_on_launch = false
+      + id                                             = (known after apply)
+      + ipv6_cidr_block_association_id                 = (known after apply)
+      + ipv6_native                                    = false
+      + map_public_ip_on_launch                        = true
+      + owner_id                                       = (known after apply)
+      + private_dns_hostname_type_on_launch            = (known after apply)
+      + tags                                           = {
+          + "Name"                   = "shoplite-prod-public-subnet-2"
+          + "kubernetes.io/role/elb" = "1"
+        }
+      + tags_all                                       = {
+          + "Name"                   = "shoplite-prod-public-subnet-2"
+          + "environment"            = "prod"
+          + "kubernetes.io/role/elb" = "1"
+          + "managed_by"             = "terraform"
+          + "project"                = "shoplite"
+        }
+      + vpc_id                                         = (known after apply)
+    }
+
+  # module.network.aws_vpc.main will be created
+  + resource "aws_vpc" "main" {
+      + arn                                  = (known after apply)
+      + cidr_block                           = "10.0.0.0/16"
+      + default_network_acl_id               = (known after apply)
+      + default_route_table_id               = (known after apply)
+      + default_security_group_id            = (known after apply)
+      + dhcp_options_id                      = (known after apply)
+      + enable_dns_hostnames                 = true
+      + enable_dns_support                   = true
+      + enable_network_address_usage_metrics = (known after apply)
+      + id                                   = (known after apply)
+      + instance_tenancy                     = "default"
+      + ipv6_association_id                  = (known after apply)
+      + ipv6_cidr_block                      = (known after apply)
+      + ipv6_cidr_block_network_border_group = (known after apply)
+      + main_route_table_id                  = (known after apply)
+      + owner_id                             = (known after apply)
+      + tags                                 = {
+          + "Name" = "shoplite-prod-vpc"
+        }
+      + tags_all                             = {
+          + "Name"        = "shoplite-prod-vpc"
+          + "environment" = "prod"
+          + "managed_by"  = "terraform"
+          + "project"     = "shoplite"
+        }
+    }
+
+Plan: 37 to add, 0 to change, 0 to destroy.
+
+Changes to Outputs:
+  + alb_arn                   = (known after apply)
+  + alb_dns_name              = (known after apply)
+  + control_plane_instance_id = (known after apply)
+  + control_plane_private_ip  = (known after apply)
+  + ecr_repository_urls       = {
+      + shoplite-catalog-api  = (known after apply)
+      + shoplite-order-worker = (known after apply)
+      + shoplite-web          = (known after apply)
+    }
+  + nat_gateway_ip            = (known after apply)
+  + private_subnet_ids        = [
+      + (known after apply),
+      + (known after apply),
+    ]
+  + public_subnet_ids         = [
+      + (known after apply),
+      + (known after apply),
+    ]
+  + ssm_instance_profile_name = "shoplite-prod-node-profile"
+  + vpc_id                    = (known after apply)
+  + worker_instance_ids       = [
+      + (known after apply),
+      + (known after apply),
+    ]
+  + worker_private_ips        = [
+      + (known after apply),
+      + (known after apply),
+    ]
+
+─────────────────────────────────────────────────────────────────────────────
+
+Note: You didn't use the -out option to save this plan, so Terraform can't
+guarantee to take exactly these actions if you run "terraform apply" now.

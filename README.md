@@ -60,7 +60,138 @@
 
 ---
 
-## 2. Component Specifications
+## 2. Live Demonstration Evidence
+
+The following captures were produced from the running system: the local Docker Compose stack, a hardened Linux environment, a live AWS plan execution, and a fully bootstrapped Kubernetes cluster with the complete observability stack and GitOps automation. Each subsection demonstrates one capability of the platform end to end.
+
+### 2.1 Catalog API & Order Lifecycle
+
+<div>
+<img src="docs/evidence/screenshots/Q1-api-application/web-ui-catalog.png" width="420" alt="Web storefront">
+<img src="docs/evidence/screenshots/Q1-api-application/products-listing.png" width="420" alt="GET /products">
+</div>
+
+*Web storefront with live order ticker — `GET /products` returning the seeded catalog.*
+
+<div>
+<img src="docs/evidence/screenshots/Q1-api-application/health-readiness-probes.png" width="420" alt="Probes">
+<img src="docs/evidence/screenshots/Q1-api-application/order-creation-201.png" width="420" alt="POST /orders 201">
+</div>
+
+*Liveness/readiness probes (`/healthz`, `/readyz` verifying database + Redis) — order submission accepted with `201 Created`.*
+
+<div>
+<img src="docs/evidence/screenshots/Q1-api-application/order-lifecycle-completed.png" width="420" alt="Order completed">
+<img src="docs/evidence/screenshots/Q1-api-application/structured-json-logs.png" width="420" alt="JSON logs">
+</div>
+
+*Asynchronous fulfillment: order reaches `COMPLETED` with `completed_at` timestamp — single-line JSON logs on `stdout` carrying `trace_id` correlation.*
+
+![Prometheus metrics exposition](docs/evidence/screenshots/Q1-api-application/prometheus-metrics.png)
+
+*`/metrics` exporting the six golden-signal metrics for Prometheus scraping.*
+
+### 2.2 Containerization & Runtime Security
+
+<div>
+<img src="docs/evidence/screenshots/Q2-containerization/compose-services-healthy.png" width="420" alt="Compose healthy">
+<img src="docs/evidence/screenshots/Q2-containerization/image-sizes-under-150mb.png" width="420" alt="Image sizes">
+</div>
+
+*All five services healthy under Docker Compose — multi-stage images at 145 MB / 141 MB / 112 MB, within the 150 MB budget.*
+
+![Non-root container user](docs/evidence/screenshots/Q2-containerization/nonroot-uid-10001.png)
+
+*Containers execute as unprivileged user `UID 10001` — no root anywhere in the runtime.*
+
+### 2.3 Linux Server Hardening
+
+<div>
+<img src="docs/evidence/screenshots/Q3-linux-hardening/B2-log-dir-acl.png" width="420" alt="Log ACLs">
+<img src="docs/evidence/screenshots/Q3-linux-hardening/B3-backup-timer.png" width="420" alt="Backup timer">
+</div>
+
+*`/var/log/shoplite/` owned `root:ops` mode `750` with exactly one POSIX ACL (`g:ops:r-X`) — nightly `pg_dump` backup timer active with next-run schedule.*
+
+<div>
+<img src="docs/evidence/screenshots/Q3-linux-hardening/B4-ufw-firewall.png" width="420" alt="UFW">
+<img src="docs/evidence/screenshots/Q3-linux-hardening/B5-open-ports.png" width="420" alt="Open ports">
+</div>
+
+*UFW firewall: default-deny incoming with only 22/80/443 permitted — listening sockets limited to expected services.*
+
+<div>
+<img src="docs/evidence/screenshots/Q3-linux-hardening/B6-users-groups.png" width="420" alt="Users and groups">
+</div>
+
+*Dedicated `deploy` user and `ops` group for least-privilege operations.*
+
+### 2.4 AWS Infrastructure as Code
+
+<div>
+<img src="docs/evidence/screenshots/Q4-aws-iac/D1-terraform-plan.png" width="420" alt="Terraform plan">
+<img src="docs/evidence/screenshots/Q4-aws-iac/D2-plan-summary.png" width="420" alt="Plan summary">
+</div>
+
+*Terraform execution plan for the full cloud topology — 37 resources across a 2-AZ VPC, private-subnet compute, ALB, and ECR (`docs/evidence/terraform-plan-2026-11-21.txt`).*
+
+### 2.5 Kubernetes Workloads & Helm
+
+![Cluster workloads](docs/evidence/screenshots/Q5-kubernetes-helm/workloads-running.png)
+
+*Deployments, Services, and Ingress reconciled by the unified Helm chart in the cluster namespace.*
+
+### 2.6 Observability Stack
+
+<div>
+<img src="docs/evidence/screenshots/Q6-observability/C4-golden-signals.png" width="420" alt="Golden Signals">
+<img src="docs/evidence/screenshots/Q6-observability/C5-loki-logs.png" width="420" alt="Loki logs">
+</div>
+
+*Golden Signals dashboard (traffic, latency percentiles, 5xx rate, saturation, queue depth) — Loki streaming the structured JSON logs with `trace_id` derived fields.*
+
+<div>
+<img src="docs/evidence/screenshots/Q6-observability/C6-loki-logs.png" width="420" alt="Loki filtered">
+<img src="docs/evidence/screenshots/Q6-observability/C7-loki-logs.png" width="420" alt="Loki trace links">
+</div>
+
+*Log drill-down by service and level, with one-click navigation from a log line to its distributed trace in Tempo.*
+
+### 2.7 GitOps Delivery & Self-Healing
+
+<div>
+<img src="docs/evidence/screenshots/Q7-cicd-gitops/C2-argocd-app-detail.png" width="420" alt="ArgoCD app">
+<img src="docs/evidence/screenshots/Q7-cicd-gitops/C3-argocd-self-heal.png" width="420" alt="Self-heal">
+</div>
+
+*ArgoCD Application tree fully `Synced/Healthy` — drift injected by scaling a deployment to zero is automatically reconciled back to the declared state.*
+
+<div>
+<img src="docs/evidence/screenshots/Q7-cicd-gitops/self-heal-scale-trigger.png" width="420" alt="Scale trigger">
+<img src="docs/evidence/screenshots/Q7-cicd-gitops/C9-argocd-reverted.png" width="420" alt="Revert synced">
+</div>
+
+*The self-heal trigger (`kubectl scale --replicas=0`) and the GitOps revert being reconciled into the cluster.*
+
+### 2.8 Chaos Engineering & Incident Recovery
+
+<div>
+<img src="docs/evidence/screenshots/Q8-chaos-rca/C8-alertmanager-firing.png" width="420" alt="Alertmanager firing">
+<img src="docs/evidence/screenshots/Q8-chaos-rca/C8-grafana-5xx-spike.png" width="420" alt="5xx spike">
+</div>
+
+*Fault injected via a GitOps commit (`CHAOS_ERROR_RATE=0.25`) under sustained 25-VU load: `HighErrorRate` (Critical), `HighLatency`, and `QueueBacklog` firing in Alertmanager — 22% 5xx on the Golden Signals board.*
+
+<div>
+<img src="docs/evidence/screenshots/Q8-chaos-rca/C9-grafana-recovery.png" width="420" alt="Recovery">
+<img src="docs/evidence/screenshots/Q8-chaos-rca/C9-alerts-resolving.png" width="420" alt="Alerts resolving">
+</div>
+
+*Recovery after the GitOps revert: error rate collapses to zero, queue backlog drains, alerts resolve — full incident lifecycle diagnosed purely through the observability chain (`docs/evidence/screenshots/Q8-chaos-rca/k6-chaos-run-results.txt`).*
+
+---
+
+## 3. Component Specifications
 
 | Component | Responsibility | Tech Stack | Container Details | Internal Ports |
 | :--- | :--- | :--- | :--- | :--- |
@@ -72,7 +203,7 @@
 
 ---
 
-## 3. API Contract & Endpoints
+## 4. API Contract & Endpoints
 
 | Method | Endpoint | Description | Expected Status Codes |
 | :--- | :--- | :--- | :--- |
@@ -86,9 +217,9 @@
 
 ---
 
-## 4. Observability & Golden Signals
+## 5. Observability & Golden Signals
 
-### 4.1 Exported Application Metrics (`/metrics`)
+### 5.1 Exported Application Metrics (`/metrics`)
 
 | Metric Name | Type | Labels | Description |
 | :--- | :--- | :--- | :--- |
@@ -99,7 +230,7 @@
 | `order_queue_depth` | Gauge | *None* | Current size of Redis pending list (`orders:pending`) |
 | `order_processing_seconds` | Histogram | *None* | Time taken by worker to process an individual order |
 
-### 4.2 Logging Standard
+### 5.2 Logging Standard
 Both `catalog-api` and `order-worker` output single-line structured JSON logs directly to `stdout`:
 ```json
 {
@@ -112,7 +243,7 @@ Both `catalog-api` and `order-worker` output single-line structured JSON logs di
 }
 ```
 
-### 4.3 Production Alertmanager Rules
+### 5.3 Production Alertmanager Rules
 1. `HighErrorRate` (Critical): HTTP 5xx error rate $> 5\%$ for 5 minutes.
 2. `HighLatency` (Warning): p95 latency $> 1.0\text{s}$ for 5 minutes.
 3. `QueueBacklog` (Warning): `order_queue_depth > 50` for 10 minutes.
@@ -121,7 +252,7 @@ Both `catalog-api` and `order-worker` output single-line structured JSON logs di
 
 ---
 
-## 5. Fault-Injection & Chaos Engineering
+## 6. Fault-Injection & Chaos Engineering
 
 All fault-injection flags are **disabled by default** and activated exclusively during reliability verification exercises:
 
@@ -134,7 +265,7 @@ All fault-injection flags are **disabled by default** and activated exclusively 
 
 ---
 
-## 6. Repository Layout (GitOps Split)
+## 7. Repository Layout (GitOps Split)
 
 The system operates across two isolated repositories:
 
@@ -177,11 +308,11 @@ shoplite-gitops/
 
 ---
 
-## 7. Automated CI/CD & GitOps Delivery Pipeline
+## 8. Automated CI/CD & GitOps Delivery Pipeline
 
 The ShopLite delivery lifecycle enforces **The Golden Rule (Constraint C2)**: complete physical and architectural separation between Continuous Integration (CI) in `shoplite-app` and Continuous Delivery / GitOps (CD) in `shoplite-gitops`.
 
-### 7.1 Delivery Architecture & Handshake Sequence
+### 8.1 Delivery Architecture & Handshake Sequence
 
 ```mermaid
 sequenceDiagram
@@ -223,7 +354,7 @@ sequenceDiagram
     end
 ```
 
-### 7.2 Workflow Triggers & Execution Modes
+### 8.2 Workflow Triggers & Execution Modes
 
 The workflow in [.github/workflows/ci.yaml](file:///.github/workflows/ci.yaml) supports three execution modes:
 1. **Push to `main`:** Runs full pipeline (Test $\to$ Scan $\to$ Publish $\to$ GitOps Promote).
@@ -233,14 +364,14 @@ The workflow in [.github/workflows/ci.yaml](file:///.github/workflows/ci.yaml) s
    gh workflow run ci.yaml --ref main
    ```
 
-### 7.3 Security Posture & Least Privilege
+### 8.3 Security Posture & Least Privilege
 - **Zero Static AWS Keys:** Uses GitHub Actions OpenID Connect (OIDC) identity provider with AWS IAM role assumption (`sts:AssumeRoleWithWebIdentity`).
 - **Zero Cluster-Admin CI Tokens:** CI runners possess zero Kubernetes credentials and execute zero `kubectl` or `helm upgrade` commands. All deployments are reconciled exclusively by ArgoCD from `shoplite-gitops`.
 - **Shift-Left Vulnerability Gate:** Multi-stage builds are scanned with Aqua Security Trivy, blocking deployment on any unpatched `CRITICAL` or `HIGH` vulnerabilities.
 
 ---
 
-## 8. Quick Start & Local Development
+## 9. Quick Start & Local Development
 
 ### Prerequisites
 - Docker Engine 24+ and Docker Compose v2
@@ -277,7 +408,7 @@ make down
 
 ---
 
-## 9. Direct Inspection & Diagnostics
+## 10. Direct Inspection & Diagnostics
 
 ```bash
 # Check service liveness and readiness
@@ -298,7 +429,7 @@ docker compose exec redis redis-cli LLEN orders:processing
 
 ---
 
-## 10. Testing Strategy (3-Tier Testing Protocol)
+## 11. Testing Strategy (3-Tier Testing Protocol)
 
 Testing adheres to **Constraint C18** in [AGENTS.md](file:///E:/shoplite-app/AGENTS.md):
 
@@ -314,7 +445,7 @@ Testing adheres to **Constraint C18** in [AGENTS.md](file:///E:/shoplite-app/AGE
 
 ---
 
-## 11. Engineering Standards & Agent Instructions
+## 12. Engineering Standards & Agent Instructions
 
 This repository is governed by [AGENTS.md](file:///E:/shoplite-app/AGENTS.md), defining binding rules across all development phases:
 - **No Guessed Code (C1):** Official documentation verification required for all IaC, Kubernetes, and API APIs.
