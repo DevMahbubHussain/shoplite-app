@@ -74,7 +74,7 @@ All captures live under `docs/evidence/screenshots/`, organized per assessment q
 | **Q4 — AWS IaC** | `Q4-aws-iac/` | `D1-terraform-plan.png`, `D2-plan-summary.png` | Read-only `terraform plan`: 37 resources (VPC, subnets, EC2, ALB, ECR); full plan text at `terraform-plan-2026-11-21.txt` |
 | **Q5 — Kubernetes & Helm** | `Q5-kubernetes-helm/` | `workloads-running.png` | Deployments/Services/Ingress reconciled by the Helm chart in the live cluster |
 | **Q6 — Observability** | `Q6-observability/` | `C4-golden-signals.png`, `C5-loki-logs.png`, `C6-loki-logs.png`, `C7-loki-logs.png` | Golden Signals dashboard, Loki JSON log streaming, `trace_id` derived fields |
-| **Q7 — CI/CD & GitOps** | `Q7-cicd-gitops/` | `C2-argocd-app-detail.png`, `C3-argocd-self-heal.png`, `self-heal-scale-trigger.png`, `C9-argocd-reverted.png` | ArgoCD Synced/Healthy, drift self-healing after `--replicas=0`, revert reconciliation |
+| **Q7 — CI/CD & GitOps** | `Q7-cicd-gitops/` | `C3-argocd-self-heal.png`, `self-heal-scale-trigger.png`, `C9-argocd-reverted.png` | ArgoCD Synced/Healthy, drift self-healing after `--replicas=0`, revert reconciliation |
 | **Q8 — Chaos & RCA** | `Q8-chaos-rca/` | `C8-alertmanager-firing.png`, `C8-grafana-5xx-spike.png`, `C9-grafana-recovery.png`, `C9-alerts-resolving.png`, `k6-chaos-run-results.txt` | GitOps-injected `CHAOS_ERROR_RATE=0.25` under 25-VU k6 load: alerts firing, 22% 5xx, recovery after revert (k6: 25.16% fault rate observed, p95 1.91 s, 1,436 orders) |
 
 The chaos sequence in Q6–Q8 documents one continuous incident lifecycle: fault injected by GitOps commit → detected via Golden Signals → logs and alerts → GitOps revert → verified recovery.

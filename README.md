@@ -160,14 +160,13 @@ The following captures were produced from the running system: the local Docker C
 ### 2.7 GitOps Delivery & Self-Healing
 
 <div>
-<img src="docs/evidence/screenshots/Q7-cicd-gitops/C2-argocd-app-detail.png" width="420" alt="ArgoCD app">
 <img src="docs/evidence/screenshots/Q7-cicd-gitops/C3-argocd-self-heal.png" width="420" alt="Self-heal">
+<img src="docs/evidence/screenshots/Q7-cicd-gitops/self-heal-scale-trigger.png" width="420" alt="Scale trigger">
 </div>
 
 *ArgoCD Application tree fully `Synced/Healthy` — drift injected by scaling a deployment to zero is automatically reconciled back to the declared state.*
 
 <div>
-<img src="docs/evidence/screenshots/Q7-cicd-gitops/self-heal-scale-trigger.png" width="420" alt="Scale trigger">
 <img src="docs/evidence/screenshots/Q7-cicd-gitops/C9-argocd-reverted.png" width="420" alt="Revert synced">
 </div>
 
