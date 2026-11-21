@@ -25,6 +25,7 @@ const BASE_URL = __ENV.TARGET_URL || 'http://localhost:8000';
 
 export default function () {
   const headers = { 'Content-Type': 'application/json' };
+  if (__ENV.HOST_HEADER) headers['Host'] = __ENV.HOST_HEADER;
 
   // 1. Fetch Product Catalog (Traffic generation for GET /products)
   const productsRes = http.get(`${BASE_URL}/products`, { headers });
