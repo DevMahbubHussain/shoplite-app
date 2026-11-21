@@ -62,8 +62,7 @@ Dev uses a dedicated ingress host so environments never collide on the catch-all
 
 ## Evidence
 
-<img src="/screenshots/Q7-cicd-gitops/C2-argocd-app-detail.png" alt="ArgoCD application" width="440">
-<img src="/screenshots/Q7-cicd-gitops/C3-argocd-self-heal.png" alt="Self-heal" width="440">
+<img src="/screenshots/Q7-cicd-gitops/C3-argocd-self-heal.png" alt="ArgoCD self-heal" width="440">
 <img src="/screenshots/Q7-cicd-gitops/self-heal-scale-trigger.png" alt="Scale trigger" width="440">
 
 ## Gate
