@@ -1,0 +1,19 @@
+{{- if and .Values.web.enabled .Values.catalogApi.enabled }}
+{{/* The baked web image proxies to the bare name "catalog-api"; keep that name resolvable in-cluster. */}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-api
+  labels:
+    {{- include "shoplite.labels" . | nindent 4 }}
+    app.kubernetes.io/component: catalog-api
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.catalogApi.service.port }}
+      targetPort: {{ .Values.catalogApi.service.targetPort }}
+  selector:
+    {{- include "shoplite.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: catalog-api
+{{- end }}
