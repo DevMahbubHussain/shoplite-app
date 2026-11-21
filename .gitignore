@@ -100,3 +100,7 @@ Guideline/
 
 # Cloned GitOps Repository
 shoplite-gitops/
+
+# Internal working documents (kept local, never published)
+CLAUDE.md
+AGENTS.md

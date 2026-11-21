@@ -430,7 +430,7 @@ docker compose exec redis redis-cli LLEN orders:processing
 
 ## 11. Testing Strategy (3-Tier Testing Protocol)
 
-Testing adheres to **Constraint C18** in [AGENTS.md](file:///E:/shoplite-app/AGENTS.md):
+Testing follows a three-tier protocol:
 
 1. **Tier 1 — Contract-First TDD (`catalog-api`):**
    - Unit tests (`services/catalog-api/tests/test_api.py`) are authored **before** route implementations.
@@ -441,15 +441,3 @@ Testing adheres to **Constraint C18** in [AGENTS.md](file:///E:/shoplite-app/AGE
    - Validates graceful shutdown and order write completion upon `SIGTERM`.
 3. **Tier 3 — Probe-Driven Smoke Testing (`scripts/smoke-test.sh`):**
    - Automated runtime script that polls `/readyz`, validates database seeding, places a real order, and polls until `COMPLETED`.
-
----
-
-## 12. Engineering Standards & Agent Instructions
-
-This repository is governed by [AGENTS.md](file:///E:/shoplite-app/AGENTS.md), defining binding rules across all development phases:
-- **No Guessed Code (C1):** Official documentation verification required for all IaC, Kubernetes, and API APIs.
-- **Strict Non-Root Security (C5):** Containers run as `UID 10001` with read-only root filesystems and dropped capabilities.
-- **SOLID Architecture (C15):** Separation of Routers, Services, and Repositories with Pydantic v2 DTOs.
-- **Clean Code & Smell Elimination (C16):** Concise 1-line notes only; zero narrative comments; short methods ($\le 25$ lines).
-- **Pragmatic Simplicity (C17):** Strict enforcement of YAGNI and KISS; zero speculative abstraction or framework wrappers.
-- **Zero Third-Party Vendor References (C3):** The project presents strictly as an enterprise production system.
