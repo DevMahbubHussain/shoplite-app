@@ -35,6 +35,16 @@ output "control_plane_private_ip" {
   description = "Private IP address of the Kubernetes control plane EC2 instance"
 }
 
+output "control_plane_instance_id" {
+  value       = module.compute.control_plane_instance_id
+  description = "Instance ID of the Kubernetes control plane EC2 instance"
+}
+
+output "worker_instance_ids" {
+  value       = module.compute.worker_instance_ids
+  description = "Instance IDs of the Kubernetes worker EC2 instances"
+}
+
 output "worker_private_ips" {
   value       = module.compute.worker_private_ips
   description = "Private IP addresses of the Kubernetes worker EC2 instances"

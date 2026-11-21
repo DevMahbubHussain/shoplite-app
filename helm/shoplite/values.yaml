@@ -51,7 +51,7 @@ catalogApi:
   enabled: true
   replicaCount: 2
   image:
-    repository: 263303066497.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-catalog-api
+    repository: 904907793701.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-catalog-api
     tag: "latest"
     pullPolicy: IfNotPresent
   service:
@@ -95,7 +95,7 @@ orderWorker:
   enabled: true
   replicaCount: 2
   image:
-    repository: 263303066497.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-order-worker
+    repository: 904907793701.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-order-worker
     tag: "latest"
     pullPolicy: IfNotPresent
   service:
@@ -127,7 +127,7 @@ web:
   enabled: true
   replicaCount: 2
   image:
-    repository: 263303066497.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-web
+    repository: 904907793701.dkr.ecr.ap-southeast-1.amazonaws.com/shoplite-web
     tag: "latest"
     pullPolicy: IfNotPresent
   service:

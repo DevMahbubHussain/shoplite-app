@@ -20,7 +20,7 @@ variable "aws_region" {
 
 variable "state_bucket_name" {
   type        = string
-  default     = "shoplite-tfstate-263303066497"
+  default     = "shoplite-tfstate-904907793701"
   description = "Name of the S3 bucket for Terraform remote state"
 }
 

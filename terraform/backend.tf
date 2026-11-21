@@ -3,7 +3,7 @@
 
 terraform {
   backend "s3" {
-    bucket         = "shoplite-tfstate-263303066497"
+    bucket         = "shoplite-tfstate-904907793701"
     key            = "infrastructure/terraform.tfstate"
     region         = "ap-southeast-1"
     dynamodb_table = "shoplite-tflocks"
