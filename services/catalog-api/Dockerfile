@@ -13,6 +13,7 @@ RUN python -m venv /opt/venv && \
     rm -rf /opt/venv/lib/python3.11/site-packages/pip* \
            /opt/venv/lib/python3.11/site-packages/setuptools* \
            /opt/venv/lib/python3.11/site-packages/pkg_resources && \
+    rm -rf /opt/venv/lib/python3.11/site-packages/*.dist-info && \
     find /opt/venv -type d -name "__pycache__" -prune -exec rm -rf {} + 2>/dev/null || true && \
     find /opt/venv -type d -name "tests" -prune -exec rm -rf {} + 2>/dev/null || true && \
     find /opt/venv -type f -name "*.pyc" -delete
@@ -23,9 +24,14 @@ FROM python:3.11-alpine AS runner
 WORKDIR /app
 
 RUN apk update && apk upgrade --no-cache && \
-    apk add --no-cache curl && \
     addgroup -g 10001 -S appuser && \
-    adduser -u 10001 -S appuser -G appuser
+    adduser -u 10001 -S appuser -G appuser && \
+    rm -rf /usr/local/lib/python3.11/ensurepip \
+           /usr/local/lib/python3.11/idlelib \
+           /usr/local/lib/python3.11/lib2to3 \
+           /usr/local/lib/python3.11/site-packages \
+           /var/cache/* && \
+    find /usr/local/lib/python3.11 -depth -type d -name "__pycache__" -exec rm -rf {} +
 
 COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH" \
@@ -39,6 +45,6 @@ USER 10001
 EXPOSE 8000
 
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
-  CMD curl -f http://localhost:8000/healthz || exit 1
+  CMD python -c "import sys,urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:8000/healthz', timeout=2).status == 200 else sys.exit(1)"
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log", "--log-level", "warning"]
